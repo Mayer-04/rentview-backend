@@ -1,0 +1,95 @@
+# Python bytecode and cache directories
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging artifacts
+build/
+dist/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.eggs/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.uv/
+.uvcache/
+.uv-cache/
+
+# Tooling caches
+.ruff_cache
+.mypy_cache/
+.pytest_cache/
+.pyre/
+.pytype/
+.nox/
+.tox/
+.hypothesis/
+.cache/
+.dmypy.json
+dmypy.json
+pytest-debug.log
+cython_debug/
+
+# Coverage reports
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+*.cover
+*.py,cover
+
+# Database & storage files
+*.db
+*.sqlite
+*.sqlite3
+postgres_data/
+
+# Local environment & secrets
+.env
+.env.*
+!.env.example
+.envrc
+.direnv/
+
+# Application logs and temp files
+logs/
+tmp/
+*.log
+*.tmp
+
+# Documentation build artifacts
+docs/_build/
+site/
+public/
+ipynb_checkpoints/
+
+# Developer-only folders
+ejemplos/
+
+# Editor / OS files
+.vscode/
+.idea/
+*.code-workspace
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db

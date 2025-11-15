@@ -1,0 +1,29 @@
+[project]
+name = "arrendamos-backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13.7"
+dependencies = [
+    "alembic>=1.17.2",
+    "fastapi[standard]>=0.121.2",
+    "psycopg[binary,pool]>=3.2.12",
+    "pwdlib[argon2]>=0.3.0",
+    "pydantic-settings>=2.12.0",
+    "python-dotenv>=1.2.1",
+    "resend>=2.19.0",
+    "sqlalchemy>=2.0.44",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "mypy>=1.18.2",
+    "pre-commit>=4.4.0",
+    "pytest>=9.0.1",
+    "pytest-cov>=7.0.0",
+]
+lint = ["ruff>=0.14.5"]
+
+[tool.uv]
+default-groups = ["dev", "lint"]

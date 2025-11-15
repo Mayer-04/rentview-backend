@@ -1,0 +1,25 @@
+line-length = 100
+target-version = "py313"
+extend-exclude = ["migrations"]
+
+[lint]
+select = ["F", "UP", "B", "SIM", "I", "N", "S", "ANN", "PERF"]
+
+ignore = ["E501", "B008"]
+fixable = ["ALL"]
+unfixable = ["S101"]
+
+[lint.per-file-ignores]
+"tests/*" = ["S101", "D"]
+"src/app/shared/infrastructure/settings.py" = ["S104"]
+
+[lint.pydocstyle]
+convention = "google"
+
+[format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "lf"
+docstring-code-format = true
+docstring-code-line-length = 100

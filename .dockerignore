@@ -1,0 +1,45 @@
+.git
+.gitmodules
+.gitignore
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+build/
+dist/
+wheels/
+
+# Tool caches
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Local configs and metadata
+.python-version
+*.log
+*.sqlite3
+*.db
+
+# Project-specific
+docker-compose.yml
+Makefile
+ruff.md
+ruff.toml
