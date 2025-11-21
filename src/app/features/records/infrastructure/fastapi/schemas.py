@@ -1,0 +1,77 @@
+from __future__ import annotations
+
+from datetime import datetime
+from decimal import Decimal
+from typing import Annotated
+
+from pydantic import BaseModel, Field, field_validator
+
+from app.features.records.domain.models import HousingType, Record
+
+
+class CreateRecordRequest(BaseModel):
+    address: Annotated[str, Field(..., min_length=1, description="Dirección de la vivienda")]
+    country: Annotated[
+        str, Field(..., min_length=1, description="País donde se encuentra la vivienda")
+    ]
+    city: Annotated[
+        str, Field(..., min_length=1, description="Ciudad donde se encuentra la vivienda")
+    ]
+    housing_type: HousingType = Field(..., description="Tipo de vivienda")
+    monthly_rent: Annotated[
+        Decimal,
+        Field(..., gt=0, max_digits=12, decimal_places=2, description="Canon mensual"),
+    ]
+    images: list[str] = Field(default_factory=list, description="URLs de imágenes opcionales")
+
+    @field_validator("housing_type", mode="before")
+    @classmethod
+    def normalize_housing_type(cls, value: HousingType | str) -> HousingType:
+        if isinstance(value, HousingType):
+            return value
+        normalized = str(value).strip().lower()
+        return HousingType(normalized)
+
+    @field_validator("images", mode="before")
+    @classmethod
+    def default_images(cls, value: list[str] | None) -> list[str]:
+        return value or []
+
+
+class RecordImageResponse(BaseModel):
+    id: int
+    image_url: str
+    created_at: datetime | None = None
+
+
+class RecordResponse(BaseModel):
+    id: int
+    address: str
+    country: str
+    city: str
+    housing_type: HousingType
+    monthly_rent: Decimal
+    images: list[RecordImageResponse]
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+    @classmethod
+    def from_domain(cls, record: Record) -> RecordResponse:
+        return cls(
+            id=record.id,
+            address=record.address,
+            country=record.country,
+            city=record.city,
+            housing_type=record.housing_type,
+            monthly_rent=record.monthly_rent,
+            images=[
+                RecordImageResponse(
+                    id=image.id,
+                    image_url=image.image_url,
+                    created_at=image.created_at,
+                )
+                for image in record.images
+            ],
+            created_at=record.created_at,
+            updated_at=record.updated_at,
+        )
