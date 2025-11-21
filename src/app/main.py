@@ -5,7 +5,11 @@ import uvicorn
 from fastapi import FastAPI
 
 from app.features.records.infrastructure.fastapi.router import records_router
-from app.shared.infrastructure.database import close_connection_pool, open_connection_pool
+from app.features.reviews.infrastructure.fastapi.router import reviews_router
+from app.shared.infrastructure.database import (
+    close_connection_pool,
+    open_connection_pool,
+)
 from app.shared.infrastructure.settings import settings
 
 
@@ -27,6 +31,7 @@ app = FastAPI(
 )
 
 app.include_router(records_router, prefix=settings.app.api_prefix)
+app.include_router(reviews_router, prefix=settings.app.api_prefix)
 
 
 @app.get("/")
@@ -40,7 +45,9 @@ async def health() -> dict[str, str]:
 
 
 async def main() -> None:
-    config = uvicorn.Config("main:app", port=settings.app.port, log_level=settings.log_level)
+    config = uvicorn.Config(
+        "main:app", port=settings.app.port, log_level=settings.log_level
+    )
     server = uvicorn.Server(config)
     await server.serve()
 
