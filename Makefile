@@ -1,6 +1,6 @@
 UV ?= uv
 PY_SRC ?= src
-APP_MODULE ?= src/app/app.py
+APP_MODULE ?= src/app/main.py
 ENV_FILE ?= .env
 DEV_DOCKERFILE ?= docker/Dockerfile.dev
 DEV_COMPOSE ?= docker/docker-compose.dev.yml
