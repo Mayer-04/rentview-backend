@@ -110,14 +110,13 @@ def create_review(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="No se pudo crear la reseña",
         ) from exc
-
     return ReviewResponse.model_validate(to_review_dto(review))
 
 
 def list_reviews_for_record(
     record_id: int,
-    limit: Annotated[int, Query(20, ge=1, le=100)] = 20,
-    offset: Annotated[int, Query(0, ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
     service: ReviewService = Depends(get_review_service),
 ) -> list[ReviewResponse]:
     try:
@@ -133,7 +132,6 @@ def list_reviews_for_record(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="No se pudieron listar las reseñas",
         ) from exc
-
     return [ReviewResponse.model_validate(to_review_dto(review)) for review in reviews]
 
 
@@ -152,7 +150,6 @@ def get_review(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="No se pudo obtener la reseña",
         ) from exc
-
     return ReviewResponse.model_validate(to_review_dto(review))
 
 
@@ -184,7 +181,6 @@ def update_review(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="No se pudo actualizar la reseña",
         ) from exc
-
     return ReviewResponse.model_validate(to_review_dto(review))
 
 

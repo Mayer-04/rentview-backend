@@ -24,9 +24,6 @@ CREATE TABLE record_images (
 
 CREATE INDEX idx_record_images_record ON record_images(record_id);
 
--- =====================================================
--- 3) REVIEWS (reseñas del inmueble)
--- =====================================================
 CREATE TABLE reviews (
     id BIGSERIAL PRIMARY KEY,
     record_id BIGINT NOT NULL REFERENCES records(id) ON DELETE CASCADE,
@@ -51,10 +48,7 @@ CREATE TABLE review_images (
 
 CREATE INDEX idx_review_images_review ON review_images(review_id);
 
--- =====================================================
--- 5) REVIEW COMMENTS (comentarios dentro de reseñas)
--- HU6
--- =====================================================
+
 CREATE TABLE comments (
     id BIGSERIAL PRIMARY KEY,
     review_id BIGINT NOT NULL REFERENCES reviews(id) ON DELETE CASCADE,
@@ -67,10 +61,7 @@ CREATE INDEX idx_comments_review_id ON comments(review_id);
 
 CREATE INDEX idx_comments_review_created ON comments(review_id, created_at DESC);
 
--- =====================================================
--- 6) SAVED RECORDS (lista de guardados)
--- HU5
--- =====================================================
+
 CREATE TABLE saved_records (
     id BIGSERIAL PRIMARY KEY,
     record_id BIGINT NOT NULL REFERENCES records(id) ON DELETE CASCADE,
