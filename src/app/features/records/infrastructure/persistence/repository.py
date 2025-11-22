@@ -3,6 +3,7 @@ from __future__ import annotations
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
+from app.features.records.domain import exceptions
 from app.features.records.domain.models import HousingType, Record, RecordImage
 from app.features.records.domain.repository import RecordRepository
 from app.features.records.infrastructure.persistence.models import RecordImageModel, RecordModel
@@ -61,6 +62,26 @@ class SQLAlchemyRecordRepository(RecordRepository):
         )
         records = self._session.scalars(stmt).all()
         return [self._to_domain(record_model) for record_model in records]
+
+    def update(self, record: Record, *, replace_images: bool) -> Record:
+        record_model = self._session.get(RecordModel, record.id)
+        if record_model is None:
+            raise exceptions.RecordNotFoundError(f"Record {record.id} does not exist")
+
+        record_model.address = record.address
+        record_model.country = record.country
+        record_model.city = record.city
+        record_model.housing_type = record.housing_type.value
+        record_model.monthly_rent = record.monthly_rent
+
+        if replace_images:
+            record_model.images.clear()
+            for image in record.images:
+                record_model.images.append(RecordImageModel(image_url=image.image_url))
+
+        self._session.commit()
+        self._session.refresh(record_model)
+        return self._to_domain(record_model)
 
     def _to_domain(self, record_model: RecordModel) -> Record:
         images = [

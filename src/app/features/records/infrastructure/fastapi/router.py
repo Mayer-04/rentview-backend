@@ -27,6 +27,11 @@ records_router.get(
     response_model=RecordResponse,
 )(get_record)
 
+records_router.put(
+    "/{record_id}",
+    response_model=RecordResponse,
+)(update_record)
+
 records_router.delete(
     "/{record_id}",
     status_code=status.HTTP_204_NO_CONTENT,

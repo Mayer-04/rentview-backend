@@ -58,6 +58,29 @@ async def get_record(record_id: int, db: Session = Depends(get_db)) -> RecordRes
     return RecordResponse.from_domain(record)
 
 
+async def update_record(
+    record_id: int, payload: UpdateRecordRequest, db: Session = Depends(get_db)
+) -> RecordResponse:
+    service = _get_service(db)
+    command = UpdateRecordCommand(
+        address=payload.address,
+        country=payload.country,
+        city=payload.city,
+        housing_type=payload.housing_type,
+        monthly_rent=payload.monthly_rent,
+        image_urls=payload.images,
+    )
+
+    try:
+        record = service.update_record(record_id, command)
+    except exceptions.RecordNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except exceptions.RecordError as exc:
+        raise _to_http_exception(exc) from exc
+
+    return RecordResponse.from_domain(record)
+
+
 async def list_records(
     limit: int = 20,
     offset: int = 0,
