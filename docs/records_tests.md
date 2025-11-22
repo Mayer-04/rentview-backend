@@ -33,6 +33,20 @@
   "images": ["https://example.com/fotos/local-101-frente.jpg"]
 }
 
+{
+  "record_id": 1,
+  "title": null,
+  "body": "Buena ubicación",
+  "rating": 4
+}
+
+{
+  "record_id": 3,
+  "title": " Excelente ",
+  "body": " Muy tranquilo ",
+  "rating": 3
+}
+
 ```
 
 - Cuando elimino necesito un mensaje
