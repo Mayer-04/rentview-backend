@@ -3,12 +3,13 @@ from __future__ import annotations
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.features.records.application.commands import CreateRecordCommand
+from app.features.records.application.commands import CreateRecordCommand, UpdateRecordCommand
 from app.features.records.application.services import RecordService
 from app.features.records.domain import exceptions
 from app.features.records.infrastructure.fastapi.schemas import (
     CreateRecordRequest,
     RecordResponse,
+    UpdateRecordRequest,
 )
 from app.features.records.infrastructure.persistence.repository import SQLAlchemyRecordRepository
 from app.shared.infrastructure.database import get_db
@@ -68,6 +69,31 @@ async def list_records(
     except exceptions.RecordError as exc:
         raise _to_http_exception(exc) from exc
     return [RecordResponse.from_domain(record) for record in records]
+
+
+async def update_record(
+    record_id: int,
+    payload: UpdateRecordRequest,
+    db: Session = Depends(get_db),
+) -> RecordResponse:
+    service = _get_service(db)
+    command = UpdateRecordCommand(
+        record_id=record_id,
+        address=payload.address,
+        country=payload.country,
+        city=payload.city,
+        housing_type=payload.housing_type,
+        monthly_rent=payload.monthly_rent,
+        image_urls=payload.images,
+    )
+    try:
+        record = service.update_record(command)
+    except exceptions.RecordNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except exceptions.RecordError as exc:
+        raise _to_http_exception(exc) from exc
+
+    return RecordResponse.from_domain(record)
 
 
 def _to_http_exception(error: exceptions.RecordError) -> HTTPException:

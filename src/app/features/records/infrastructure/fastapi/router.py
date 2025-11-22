@@ -5,6 +5,7 @@ from app.features.records.infrastructure.fastapi.controller import (
     delete_record,
     get_record,
     list_records,
+    update_record,
 )
 from app.features.records.infrastructure.fastapi.schemas import RecordResponse
 
@@ -30,3 +31,8 @@ records_router.delete(
     "/{record_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )(delete_record)
+
+records_router.put(
+    "/{record_id}",
+    response_model=RecordResponse,
+)(update_record)
