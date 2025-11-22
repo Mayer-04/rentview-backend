@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from decimal import Decimal
 
-from app.features.records.application.commands import CreateRecordCommand
+from app.features.records.application.commands import CreateRecordCommand, UpdateRecordCommand
 from app.features.records.domain import exceptions
 from app.features.records.domain.models import HousingType, Record, RecordImage
 from app.features.records.domain.repository import RecordRepository
@@ -42,6 +42,60 @@ class RecordService:
         if record is None:
             raise exceptions.RecordNotFoundError(f"Record {record_id} does not exist")
         return record
+
+    def update_record(self, record_id: int, command: UpdateRecordCommand) -> Record:
+        existing_record = self._repository.get(record_id)
+        if existing_record is None:
+            raise exceptions.RecordNotFoundError(f"Record {record_id} does not exist")
+
+        housing_type = (
+            self._normalize_housing_type(command.housing_type)
+            if command.housing_type is not None
+            else existing_record.housing_type
+        )
+
+        address = existing_record.address if command.address is None else command.address.strip()
+        country = existing_record.country if command.country is None else command.country.strip()
+        city = existing_record.city if command.city is None else command.city.strip()
+        monthly_rent = (
+            existing_record.monthly_rent
+            if command.monthly_rent is None
+            else command.monthly_rent
+        )
+
+        self._validate_required_fields(
+            {
+                "address": address,
+                "country": country,
+                "city": city,
+            }
+        )
+
+        if monthly_rent <= Decimal("0"):
+            raise exceptions.InvalidMonthlyRentError("Monthly rent must be greater than zero")
+
+        if not isinstance(housing_type, HousingType):
+            raise exceptions.MissingRequiredFieldError("Housing type is required")
+
+        replace_images = command.image_urls is not None
+        images = existing_record.images
+        if replace_images:
+            self._validate_images(command.image_urls or [])
+            images = [RecordImage(image_url=image.strip()) for image in command.image_urls or []]
+
+        updated_record = Record(
+            id=existing_record.id,
+            address=address,
+            country=country,
+            city=city,
+            housing_type=housing_type,
+            monthly_rent=monthly_rent,
+            images=images,
+            created_at=existing_record.created_at,
+            updated_at=existing_record.updated_at,
+        )
+
+        return self._repository.update(updated_record, replace_images=replace_images)
 
     def list_records(self, limit: int = 20, offset: int = 0) -> list[Record]:
         if limit <= 0 or limit > 100:
