@@ -38,3 +38,4 @@
 - Cuando elimino necesito un mensaje
 - Si al hacer un get de los records y esta está vacía deberia darme un error más detallado
 - Vistas para el frontend
+- http://localhost:8080/api/v1/records
