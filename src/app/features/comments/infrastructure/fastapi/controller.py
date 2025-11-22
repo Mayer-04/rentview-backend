@@ -13,12 +13,14 @@ from app.features.comments.application.schemas import (
     CreateCommentRequest,
     SavedRecordResponse,
     SaveRecordRequest,
+    UpdateCommentRequest,
 )
 from app.features.comments.application.services import (
     CommentsService,
     SavedRecordsService,
 )
 from app.features.comments.domain.exceptions import (
+    CommentNotFoundError,
     RecordNotFoundError,
     ReviewNotFoundError,
 )
@@ -72,6 +74,46 @@ def list_comments(
 ) -> list[CommentResponse]:
     comments = service.list_comments(review_id=review_id, limit=limit, offset=offset)
     return [CommentResponse.model_validate(comment) for comment in comments]
+
+
+@comments_router.put(
+    "/{comment_id}",
+    response_model=CommentResponse,
+)
+def update_comment(
+    review_id: int,
+    comment_id: int,
+    payload: UpdateCommentRequest,
+    service: CommentsService = Depends(get_comments_service),
+) -> CommentResponse:
+    try:
+        comment = service.update_comment(
+            comment_id=comment_id, review_id=review_id, body=payload.body
+        )
+    except CommentNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="comment_not_found",
+        ) from exc
+
+    return CommentResponse.model_validate(comment)
+
+
+@comments_router.delete(
+    "/{comment_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_comment(
+    review_id: int,
+    comment_id: int,
+    service: CommentsService = Depends(get_comments_service),
+) -> None:
+    removed = service.delete_comment(comment_id=comment_id, review_id=review_id)
+    if not removed:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="comment_not_found",
+        )
 
 
 @saved_records_router.post("", response_model=SavedRecordResponse)

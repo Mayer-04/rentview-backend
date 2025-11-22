@@ -3,7 +3,11 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.features.comments.application.services import CommentsRepository, SavedRecordsRepository
-from app.features.comments.domain.exceptions import RecordNotFoundError, ReviewNotFoundError
+from app.features.comments.domain.exceptions import (
+    CommentNotFoundError,
+    RecordNotFoundError,
+    ReviewNotFoundError,
+)
 from app.features.comments.domain.models import Comment, SavedRecord
 
 
@@ -49,6 +53,40 @@ class SqlAlchemyCommentsRepository(CommentsRepository):
             stmt, {"review_id": review_id, "limit": limit, "offset": offset}
         )
         return [Comment(**row) for row in result.mappings().all()]
+
+    def update(self, comment_id: int, review_id: int, body: str) -> Comment:
+        stmt = text(
+            """
+            UPDATE comments
+            SET body = :body, updated_at = CURRENT_TIMESTAMP
+            WHERE id = :comment_id AND review_id = :review_id
+            RETURNING id, review_id, body, created_at, updated_at
+            """
+        )
+        result = self._session.execute(
+            stmt, {"body": body, "comment_id": comment_id, "review_id": review_id}
+        )
+        row = result.mappings().first()
+        if row is None:
+            self._session.rollback()
+            raise CommentNotFoundError(f"Comment {comment_id} not found for review {review_id}")
+
+        self._session.commit()
+        return Comment(**row)
+
+    def delete(self, comment_id: int, review_id: int) -> bool:
+        stmt = text(
+            """
+            DELETE FROM comments
+            WHERE id = :comment_id AND review_id = :review_id
+            RETURNING id
+            """
+        )
+        result = self._session.execute(
+            stmt, {"comment_id": comment_id, "review_id": review_id}
+        )
+        self._session.commit()
+        return result.first() is not None
 
 
 class SqlAlchemySavedRecordsRepository(SavedRecordsRepository):
