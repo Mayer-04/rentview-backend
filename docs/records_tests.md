@@ -54,6 +54,13 @@
   "rating": 3
 }
 
+{
+  "record_id": 3,
+  "title": " Malo ",
+  "body": " horrible ",
+  "rating": 3
+}
+
 ```
 
 - Cuando elimino necesito un mensaje
