@@ -104,50 +104,6 @@ class RecordService:
             raise exceptions.MissingRequiredFieldError("offset must be zero or positive")
         return self._repository.list(limit=limit, offset=offset)
 
-    def update_record(self, command: UpdateRecordCommand) -> Record:
-        record = self._repository.get(command.record_id)
-        if record is None:
-            raise exceptions.RecordNotFoundError(f"Record {command.record_id} does not exist")
-
-        if (
-            command.address is None
-            and command.country is None
-            and command.city is None
-            and command.housing_type is None
-            and command.monthly_rent is None
-            and command.image_urls is None
-        ):
-            raise exceptions.MissingRequiredFieldError("Provide at least one field to update")
-
-        if command.address is not None:
-            if not command.address.strip():
-                raise exceptions.MissingRequiredFieldError("address is required")
-            record.address = command.address.strip()
-
-        if command.country is not None:
-            if not command.country.strip():
-                raise exceptions.MissingRequiredFieldError("country is required")
-            record.country = command.country.strip()
-
-        if command.city is not None:
-            if not command.city.strip():
-                raise exceptions.MissingRequiredFieldError("city is required")
-            record.city = command.city.strip()
-
-        if command.housing_type is not None:
-            record.housing_type = self._normalize_housing_type(command.housing_type)
-
-        if command.monthly_rent is not None:
-            if command.monthly_rent <= Decimal("0"):
-                raise exceptions.InvalidMonthlyRentError("Monthly rent must be greater than zero")
-            record.monthly_rent = command.monthly_rent
-
-        if command.image_urls is not None:
-            self._validate_images(command.image_urls)
-            record.images = [RecordImage(image_url=image.strip()) for image in command.image_urls]
-
-        return self._repository.update(record, replace_images=command.image_urls is not None)
-
     def _validate_create_command(
         self, command: CreateRecordCommand, housing_type: HousingType
     ) -> None:

@@ -41,6 +41,13 @@
 }
 
 {
+  "record_id": 2,
+  "title": Excelente espacio,
+  "body": "Muy amplio",
+  "rating": 4
+}
+
+{
   "record_id": 3,
   "title": " Excelente ",
   "body": " Muy tranquilo ",

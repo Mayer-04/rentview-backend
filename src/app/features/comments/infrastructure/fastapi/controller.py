@@ -130,7 +130,8 @@ def save_record(
         ) from exc
 
     response.status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
-    return SavedRecordResponse.model_validate(saved_record, update={"already_saved": not created})
+    validated = SavedRecordResponse.model_validate(saved_record)
+    return validated.model_copy(update={"already_saved": not created})
 
 
 @saved_records_router.get("", response_model=list[SavedRecordResponse])
