@@ -6,6 +6,7 @@ from fastapi import FastAPI
 
 from app.features.records.infrastructure.fastapi.router import records_router
 from app.features.reviews.infrastructure.fastapi.router import reviews_router
+from app.features.comments.infrastructure.fastapi.router import comments_router
 from app.shared.infrastructure.database import (
     close_connection_pool,
     open_connection_pool,
@@ -30,9 +31,9 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-app.include_router(records_router, prefix=settings.app.api_prefix)
 app.include_router(reviews_router, prefix=settings.app.api_prefix)
-
+app.include_router(records_router, prefix=settings.app.api_prefix)
+app.include_router(comments_router, prefix=settings.app.api_prefix)     
 
 @app.get("/")
 def read_root() -> dict[str, str]:
