@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import FastAPI
 
-from app.features.reviews.infrastructure.fastapi.router import reviews_router
+from app.features.comments.infrastructure.fastapi.router import comments_router
 from app.shared.infrastructure.database import close_connection_pool, open_connection_pool
 from app.shared.infrastructure.settings import settings
 
@@ -26,7 +26,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-app.include_router(reviews_router, prefix=settings.app.api_prefix)
+app.include_router(comments_router, prefix=settings.app.api_prefix)
 
 
 @app.get("/")
