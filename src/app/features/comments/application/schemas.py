@@ -14,6 +14,12 @@ class CreateCommentRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+class UpdateCommentRequest(BaseModel):
+    body: CommentBody
+
+    model_config = ConfigDict(extra="forbid")
+
+
 class CommentResponse(BaseModel):
     id: int
     review_id: int

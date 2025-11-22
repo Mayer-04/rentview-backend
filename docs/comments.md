@@ -8,6 +8,11 @@ Prefijo global configurado en `settings.app.api_prefix` (por defecto `/api/v1`).
   - Respuestas: `201` con comentario creado; `404` si la reseña no existe.
 - `GET /api/v1/reviews/{review_id}/comments?limit=20&offset=0`
   - Respuestas: `200` con lista ordenada por `created_at DESC`; `404` si la reseña no existe.
+- `PUT /api/v1/reviews/{review_id}/comments/{comment_id}`
+  - Body: `{"body": "Texto actualizado (1-2000 caracteres)"}`.
+  - Respuestas: `200` con el comentario actualizado; `404` si no existe el comentario (o la reseña asociada).
+- `DELETE /api/v1/reviews/{review_id}/comments/{comment_id}`
+  - Respuestas: `204` si se eliminó; `404` si no existe.
 
 ### Guardados de records
 - `POST /api/v1/saved-records`
@@ -60,6 +65,14 @@ curl -X POST http://localhost:8080/api/v1/reviews/1/comments \
 
 # Listar comentarios
 curl "http://localhost:8080/api/v1/reviews/1/comments?limit=10&offset=0"
+
+# Actualizar comentario
+curl -X PUT http://localhost:8080/api/v1/reviews/1/comments/1 \
+  -H "Content-Type: application/json" \
+  -d '{"body":"Actualización: el ruido bajó con nuevos vecinos"}'
+
+# Eliminar comentario
+curl -X DELETE http://localhost:8080/api/v1/reviews/1/comments/1
 
 # Guardar record
 curl -X POST http://localhost:8080/api/v1/saved-records \
