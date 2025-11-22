@@ -38,6 +38,33 @@ class CreateRecordRequest(BaseModel):
         return value or []
 
 
+class UpdateRecordRequest(BaseModel):
+    address: Annotated[str | None, Field(None, min_length=1, description="Dirección de la vivienda")]
+    country: Annotated[
+        str | None, Field(None, min_length=1, description="País donde se encuentra la vivienda")
+    ]
+    city: Annotated[
+        str | None, Field(None, min_length=1, description="Ciudad donde se encuentra la vivienda")
+    ]
+    housing_type: HousingType | None = Field(None, description="Tipo de vivienda")
+    monthly_rent: Annotated[
+        Decimal | None,
+        Field(None, gt=0, max_digits=12, decimal_places=2, description="Canon mensual"),
+    ]
+    images: list[str] | None = Field(
+        default=None,
+        description="URLs de imágenes; omite para mantenerlas, envía lista vacía para limpiar",
+    )
+
+    @field_validator("housing_type", mode="before")
+    @classmethod
+    def normalize_housing_type(cls, value: HousingType | str | None) -> HousingType | None:
+        if value is None or isinstance(value, HousingType):
+            return value
+        normalized = str(value).strip().lower()
+        return HousingType(normalized)
+
+
 class RecordImageResponse(BaseModel):
     id: int
     image_url: str
