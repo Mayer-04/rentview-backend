@@ -111,7 +111,6 @@ class ReviewService:
         except ReviewNotFoundError:
             raise
         except ReviewPersistenceError:
-            # Dejo pasar la excepción de persistencia sin envolver para que el controller la traduzca.
             raise
 
     def _notify_review_created(self, review: Review) -> None:
@@ -119,19 +118,45 @@ class ReviewService:
             return
 
         title_line = review.title if review.title else "Sin título"
-        body = (
+        subject = "¡Gracias por tu reseña en Rentview!"
+        plain_body = (
             "Hola,\n\n"
-            "Hemos recibido tu reseña.\n\n"
-            f"Resumen:\n"
-            f"- Record ID: {review.record_id}\n"
+            "Hemos recibido tu reseña y la estamos revisando.\n\n"
+            "Resumen:\n"
             f"- Título: {title_line}\n"
-            f"- Calificación: {review.rating}/5\n\n"
-            "Gracias por compartir tu experiencia.\n"
+            f"- Calificación: {review.rating}/5\n"
+            f"- Comentario: {review.body.strip()}\n\n"
+            "Gracias por compartir tu experiencia y ayudar a la comunidad.\n"
         )
+
+        html_body = f"""
+        <html>
+          <body style="background:#f6f7fb;padding:24px;font-family:Helvetica,Arial,sans-serif;color:#1f2d3d;">
+            <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="max-width:640px;margin:0 auto;background:white;border-radius:12px;box-shadow:0 8px 24px rgba(31,45,61,0.08);">
+              <tr>
+                <td style="padding:24px 28px;">
+                  <h1 style="margin:0 0 12px;font-size:22px;color:#111827;">¡Gracias por tu reseña!</h1>
+                  <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#4b5563;">
+                    Hemos recibido tu reseña y la estamos revisando. Apreciamos que compartas tu experiencia.
+                  </p>
+                  <div style="border:1px solid #e5e7eb;border-radius:10px;padding:16px 18px;background:#f9fafb;margin-bottom:16px;">
+                    <p style="margin:0 0 8px;font-weight:600;color:#111827;">Resumen</p>
+                    <p style="margin:4px 0;font-size:14px;color:#374151;"><strong>Título:</strong> {title_line}</p>
+                    <p style="margin:4px 0;font-size:14px;color:#374151;"><strong>Calificación:</strong> {review.rating}/5</p>
+                    <p style="margin:8px 0 0;font-size:14px;color:#374151;line-height:1.5;"><strong>Comentario:</strong> {review.body.strip()}</p>
+                  </div>
+                  <p style="margin:0;font-size:14px;line-height:1.6;color:#4b5563;">Atentamente, el equipo de RentView</p>
+                </td>
+              </tr>
+            </table>
+          </body>
+        </html>
+        """
         message = EmailMessage(
             to=review.email,
-            subject="Confirmación de tu reseña",
-            body=body,
+            subject=subject,
+            body=plain_body,
+            html_body=html_body,
         )
 
         try:
