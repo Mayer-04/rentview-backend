@@ -4,7 +4,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Annotated
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.features.records.domain.models import HousingType, Record
 
@@ -141,3 +141,19 @@ class RecordResponse(BaseModel):
             created_at=record.created_at,
             updated_at=record.updated_at,
         )
+
+
+class PaginationMeta(BaseModel):
+    page: int
+    page_size: int = Field(serialization_alias="pageSize")
+    total: int
+    total_pages: int = Field(serialization_alias="totalPages")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class PaginatedRecordsResponse(BaseModel):
+    items: list[RecordResponse]
+    meta: PaginationMeta
+
+    model_config = ConfigDict(populate_by_name=True)

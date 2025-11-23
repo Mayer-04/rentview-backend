@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.features.records.domain import exceptions
@@ -52,7 +52,7 @@ class SQLAlchemyRecordRepository(RecordRepository):
         self._session.delete(record_model)
         self._session.commit()
 
-    def list(self, limit: int = 20, offset: int = 0) -> list[Record]:
+    def list(self, limit: int = 20, offset: int = 0) -> tuple[list[Record], int]:
         stmt = (
             select(RecordModel)
             .options(selectinload(RecordModel.images))
@@ -61,7 +61,11 @@ class SQLAlchemyRecordRepository(RecordRepository):
             .offset(offset)
         )
         records = self._session.scalars(stmt).all()
-        return [self._to_domain(record_model) for record_model in records]
+
+        total_stmt = select(func.count()).select_from(RecordModel)
+        total = self._session.scalar(total_stmt) or 0
+
+        return [self._to_domain(record_model) for record_model in records], int(total)
 
     def update(self, record: Record, *, replace_images: bool) -> Record:
         record_model = self._session.get(RecordModel, record.id)
