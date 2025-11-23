@@ -90,6 +90,8 @@ class RecordService:
             city=city,
             housing_type=housing_type,
             monthly_rent=monthly_rent,
+            reviews_count=existing_record.reviews_count,
+            average_rating=existing_record.average_rating,
             images=images,
             created_at=existing_record.created_at,
             updated_at=existing_record.updated_at,

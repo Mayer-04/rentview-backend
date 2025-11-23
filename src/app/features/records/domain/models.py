@@ -29,6 +29,8 @@ class Record:
     city: str
     housing_type: HousingType
     monthly_rent: Decimal
+    reviews_count: int = 0
+    average_rating: float | None = None
     images: list[RecordImage] = field(default_factory=list)
     id: int | None = None
     created_at: datetime | None = None
