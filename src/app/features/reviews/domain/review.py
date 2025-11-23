@@ -9,6 +9,7 @@ class Review:
     """Pure domain entity representing a housing review."""
 
     record_id: int
+    email: str
     body: str
     rating: int
     id: int | None = None

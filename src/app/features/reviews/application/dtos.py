@@ -8,6 +8,7 @@ from datetime import datetime
 class CreateReviewDTO:
     record_id: int
     title: str | None
+    email: str
     body: str
     rating: int
 
@@ -16,6 +17,7 @@ class CreateReviewDTO:
 class UpdateReviewDTO:
     review_id: int
     title: str | None = None
+    email: str | None = None
     body: str | None = None
     rating: int | None = None
 
@@ -36,6 +38,7 @@ class ReviewDTO:
     id: int
     record_id: int
     title: str | None
+    email: str
     body: str
     rating: int
     created_at: datetime

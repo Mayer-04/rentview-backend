@@ -19,6 +19,7 @@ class ReviewModel(Base):
         nullable=False,
     )
     title: Mapped[str | None] = mapped_column(String(120))
+    email: Mapped[str] = mapped_column(String(320), nullable=False)
     body: Mapped[str] = mapped_column(Text, nullable=False)
     rating: Mapped[int] = mapped_column(Integer, nullable=False)
     created_at: Mapped[datetime] = mapped_column(

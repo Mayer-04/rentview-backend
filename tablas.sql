@@ -28,6 +28,10 @@ CREATE TABLE reviews (
     id BIGSERIAL PRIMARY KEY,
     record_id BIGINT NOT NULL REFERENCES records(id) ON DELETE CASCADE,
     title VARCHAR(120),
+    email VARCHAR(254) NOT NULL CHECK (
+        length(email) <= 254
+        AND email ~* '^[A-Z0-9._%+-]+@[A-Z0-9-]+(?:\.[A-Z0-9-]+)+$'
+    ),
     body TEXT NOT NULL CHECK (length(trim(body)) > 0),
     rating INT NOT NULL CHECK (
         rating BETWEEN 1

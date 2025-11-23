@@ -38,6 +38,7 @@ class SqlAlchemyReviewRepository(ReviewRepository):
         model = ReviewModel(
             record_id=review.record_id,
             title=review.title,
+            email=review.email,
             body=review.body,
             rating=review.rating,
         )
@@ -91,6 +92,7 @@ class SqlAlchemyReviewRepository(ReviewRepository):
             raise ReviewNotFoundError(f"Review {review.id} was not found")
 
         model.title = review.title
+        model.email = review.email
         model.body = review.body
         model.rating = review.rating
 

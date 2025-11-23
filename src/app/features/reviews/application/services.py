@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import re
+
 from app.features.reviews.application.dtos import CreateReviewDTO, ListReviewsQuery, UpdateReviewDTO
 from app.features.reviews.application.mappers import to_review_entity
 from app.features.reviews.domain.exceptions import (
     EmptyReviewUpdateError,
     InvalidPaginationError,
     InvalidReviewBodyError,
+    InvalidReviewEmailError,
     InvalidReviewRatingError,
     RecordNotFoundError,
     ReviewNotFoundError,
@@ -23,6 +26,7 @@ class ReviewService:
         self.repository = repository
 
     def create_review(self, dto: CreateReviewDTO) -> Review:
+        self._validate_email(dto.email)
         self._validate_body(dto.body)
         self._validate_rating(dto.rating)
 
@@ -75,6 +79,8 @@ class ReviewService:
             self._validate_body(dto.body)
         if dto.rating is not None:
             self._validate_rating(dto.rating)
+        if dto.email is not None:
+            self._validate_email(dto.email)
 
         review = self.repository.get(dto.review_id)
         if review is None:
@@ -82,6 +88,8 @@ class ReviewService:
 
         if dto.title is not None:
             review.title = dto.title.strip() if dto.title is not None else None
+        if dto.email is not None:
+            review.email = dto.email.strip()
         if dto.body is not None:
             review.body = dto.body.strip()
         if dto.rating is not None:
@@ -107,3 +115,16 @@ class ReviewService:
     def _validate_rating(rating: int) -> None:
         if rating < 1 or rating > 5:
             raise InvalidReviewRatingError("La calificación debe estar entre 1 y 5")
+
+    @staticmethod
+    def _validate_email(email: str) -> None:
+        normalized = email.strip()
+        if len(normalized) > 320:
+            raise InvalidReviewEmailError("El correo electrónico excede la longitud máxima permitida")
+        # RFC 5322-like pattern without allowing spaces or uncommon symbols.
+        email_pattern = re.compile(
+            r"^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+$",
+            re.IGNORECASE,
+        )
+        if not normalized or not email_pattern.fullmatch(normalized):
+            raise InvalidReviewEmailError("El correo electrónico no es válido")

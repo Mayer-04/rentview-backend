@@ -14,6 +14,10 @@ class InvalidReviewBodyError(ValueError):
     """Raised when the review body is missing or empty."""
 
 
+class InvalidReviewEmailError(ValueError):
+    """Raised when the review email is missing or invalid."""
+
+
 class EmptyReviewUpdateError(ValueError):
     """Raised when an update request does not include any fields."""
 

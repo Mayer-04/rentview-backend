@@ -9,6 +9,7 @@ def to_review_entity(dto: CreateReviewDTO) -> Review:
     return Review(
         record_id=dto.record_id,
         title=(dto.title.strip() if dto.title is not None else None),
+        email=dto.email.strip(),
         body=dto.body.strip(),
         rating=dto.rating,
     )
@@ -22,6 +23,7 @@ def to_review_dto(review: Review) -> ReviewDTO:
         id=review.id,
         record_id=review.record_id,
         title=review.title,
+        email=review.email,
         body=review.body,
         rating=review.rating,
         created_at=review.created_at,

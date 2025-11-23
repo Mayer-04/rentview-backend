@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, Query, status
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 from sqlalchemy.orm import Session
 
 from app.features.reviews.application.dtos import CreateReviewDTO, ListReviewsQuery, UpdateReviewDTO
@@ -14,6 +14,7 @@ from app.features.reviews.domain.exceptions import (
     EmptyReviewUpdateError,
     InvalidPaginationError,
     InvalidReviewBodyError,
+    InvalidReviewEmailError,
     InvalidReviewRatingError,
     RecordNotFoundError,
     ReviewNotFoundError,
@@ -34,6 +35,7 @@ class ReviewResponse(BaseModel):
     id: int
     record_id: int
     title: str | None
+    email: str
     body: str
     rating: int
     created_at: datetime
@@ -52,8 +54,14 @@ class PaginatedReviewsResponse(BaseModel):
 class ReviewCreateRequest(BaseModel):
     record_id: int = Field(gt=0)
     title: str | None = Field(default=None, max_length=120)
+    email: EmailStr = Field(max_length=320)
     body: str = Field(min_length=1, max_length=10_000)
     rating: int = Field(ge=1, le=5)
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def strip_email(cls, value: str) -> str:
+        return value.strip() if isinstance(value, str) else value
 
     @field_validator("body")
     @classmethod
@@ -70,14 +78,20 @@ class ReviewCreateRequest(BaseModel):
 
 class ReviewUpdateRequest(BaseModel):
     title: str | None = Field(default=None, max_length=120)
+    email: EmailStr | None = Field(default=None, max_length=320)
     body: str | None = Field(default=None, max_length=10_000)
     rating: int | None = Field(default=None, ge=1, le=5)
 
     @model_validator(mode="after")
     def ensure_at_least_one_field(self) -> ReviewUpdateRequest:
-        if self.title is None and self.body is None and self.rating is None:
+        if self.title is None and self.body is None and self.rating is None and self.email is None:
             raise ValueError("Proporciona al menos un campo para actualizar")
         return self
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def strip_email(cls, value: str | None) -> str | None:
+        return value.strip() if isinstance(value, str) else value
 
     @field_validator("body")
     @classmethod
@@ -101,6 +115,7 @@ def create_review(
         dto = CreateReviewDTO(
             record_id=payload.record_id,
             title=payload.title,
+            email=str(payload.email),
             body=payload.body,
             rating=payload.rating,
         )
@@ -110,7 +125,7 @@ def create_review(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="record no encontrado",
         ) from None
-    except (InvalidReviewBodyError, InvalidReviewRatingError) as exc:
+    except (InvalidReviewBodyError, InvalidReviewEmailError, InvalidReviewRatingError) as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(exc),
@@ -184,6 +199,7 @@ def update_review(
         dto = UpdateReviewDTO(
             review_id=review_id,
             title=payload.title,
+            email=str(payload.email) if payload.email is not None else None,
             body=payload.body,
             rating=payload.rating,
         )
@@ -193,7 +209,12 @@ def update_review(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="reseña no encontrada",
         ) from None
-    except (InvalidReviewBodyError, InvalidReviewRatingError, EmptyReviewUpdateError) as exc:
+    except (
+        InvalidReviewBodyError,
+        InvalidReviewEmailError,
+        InvalidReviewRatingError,
+        EmptyReviewUpdateError,
+    ) as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(exc),

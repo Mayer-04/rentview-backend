@@ -13,19 +13,18 @@ Todos los endpoints expuestos por la feature de reseñas están montados bajo el
 
 ```json
 {
-  "record_id": "uuid",
-  "user_id": "uuid",
-  "rent_amount": 950.0,
-  "review_text": "Texto libre (1-10000 caracteres)",
-  "rating": 1-5,
-  "image_urls": ["https://..."]  // opcional
+  "record_id": 1,
+  "title": "Opcional, hasta 120 caracteres",
+  "email": "inquilino@example.com",
+  "body": "Texto libre (1-10000 caracteres)",
+  "rating": 1-5
 }
 ```
 
-- **Respuesta 201**: objeto `ReviewResponse` con `id`, `record_id`, `user_id`, `rent_amount`, `review_text`, `rating`, `created_at`.
+- **Respuesta 201**: objeto `ReviewResponse` con `id`, `record_id`, `title`, `email`, `body`, `rating`, `created_at`, `updated_at`.
 - **Errores**:
-  - 409 si el usuario ya reseñó ese record.
-  - 422 si la calificación está fuera del rango permitido.
+  - 404 si el `record_id` no existe.
+  - 422 si el correo, el texto o la calificación no cumplen las validaciones.
 
 ### Obtener una reseña
 
@@ -35,10 +34,10 @@ Todos los endpoints expuestos por la feature de reseñas están montados bajo el
 
 ### Listar reseñas de un record
 
-- **GET** `/api/v1/reviews/record/{record_id}?limit=20&offset=0`
+- **GET** `/api/v1/reviews/records/{record_id}?page=1&page_size=20`
 - **Query params**:
-  - `limit` (1-100)
-  - `offset` (>=0)
+  - `page` (>=1)
+  - `page_size` (1-100)
 - **Respuesta 200**: lista de `ReviewResponse`.
 
 ### Actualizar reseña
@@ -48,8 +47,9 @@ Todos los endpoints expuestos por la feature de reseñas están montados bajo el
 
 ```json
 {
-  "rent_amount": 975.0,
-  "review_text": "Nuevo texto",
+  "title": "Nuevo título",
+  "email": "nuevo-correo@example.com",
+  "body": "Nuevo texto",
   "rating": 4
 }
 ```
@@ -107,8 +107,8 @@ Todos los endpoints expuestos por la feature de reseñas están montados bajo el
 
 ### Notas de uso
 
-- Autenticación/autorización no está implementada aún; debes inyectar `user_id` manualmente.
-- Todas las rutas dependen de una base PostgreSQL con las tablas declaradas en `src/app/features/reviews/review.sql`.
+- Autenticación/autorización no está implementada aún.
+- Todas las rutas dependen de una base PostgreSQL con las tablas declaradas en `src/app/features/reviews/reviews.sql`.
 - Para probar manualmente, levanta la app (`uv run fastapi dev src/app/main.py`) y realiza peticiones HTTP al host configurado (por defecto `http://localhost:8080`).
 
 ## Docker
@@ -120,7 +120,7 @@ No hace falta. Quédate en la raíz del proyecto y apunta al archivo que está e
 
 ## Observaciones
 
-Para crear una reseña vía POST /api/v1/reviews solo necesitas valores UUID válidos (formato estándar xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx) en los campos record_id y user_id. El controller (src/app/features/reviews/infrastructure/fastapi/controller.py (lines 82-127)) valida únicamente que sean UUID y delega al repositorio; no hay firma digital ni token adicional en este flujo.
-Lo único imprescindible es que esos UUID existan en las tablas records y users porque PostgreSQL tiene llaves foráneas (ver review.sql y las columnas con REFERENCES ... ON DELETE CASCADE). Si envías IDs inventados que no existan en la base, obtendrás un error de integridad desde la base de datos.
-En pruebas locales puedes generar IDs con uuidgen o la librería uuid de Python, siempre y cuando insertes los registros correspondientes en users y records antes de llamar al endpoint.
-d9428888-122b-4f5b-89f0-0c5bdae75a5b
+- `record_id` debe existir en la tabla `records` (llave foránea en `src/app/features/reviews/reviews.sql` y `tablas.sql`).
+- El campo `email` es obligatorio, se valida con un patrón estricto y se limita a 320 caracteres.
+- `body` debe venir con texto no vacío y `rating` solo admite valores entre 1 y 5.
+- Autenticación/autorización no está implementada aún.

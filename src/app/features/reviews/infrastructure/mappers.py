@@ -10,6 +10,7 @@ def review_model_to_domain(model: ReviewModel) -> Review:
         id=model.id,
         record_id=model.record_id,
         title=model.title,
+        email=model.email,
         body=model.body,
         rating=model.rating,
         created_at=model.created_at,
