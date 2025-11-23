@@ -20,9 +20,7 @@ class SmtpEmailSender(EmailSender):
 
         recipients = self._normalize_recipients(message.to)
         if not recipients:
-            raise EmailDeliveryError(
-                "No se proporcionaron destinatarios para el correo."
-            )
+            raise EmailDeliveryError("No se proporcionaron destinatarios para el correo.")
 
         from_email = (message.from_email or self._settings.from_email or "").strip()
         if not from_email:
@@ -35,9 +33,7 @@ class SmtpEmailSender(EmailSender):
         smtp_username = (self._settings.smtp_username or "").strip()
         smtp_password = (self._settings.smtp_password or "").strip()
         if not smtp_username or not smtp_password:
-            raise EmailDeliveryError(
-                "Faltan las credenciales SMTP para enviar correos."
-            )
+            raise EmailDeliveryError("Faltan las credenciales SMTP para enviar correos.")
 
         mime_message = self._build_message(
             message=message,
@@ -103,8 +99,6 @@ class SmtpEmailSender(EmailSender):
             normalized = [recipients.strip()] if recipients.strip() else []
         else:
             normalized = [
-                recipient.strip()
-                for recipient in recipients
-                if recipient and recipient.strip()
+                recipient.strip() for recipient in recipients if recipient and recipient.strip()
             ]
         return [recipient for recipient in normalized if recipient]

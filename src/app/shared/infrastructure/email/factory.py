@@ -17,9 +17,7 @@ def get_email_sender() -> EmailSender | None:
     """Return a singleton email sender based on the current configuration."""
     email_settings = settings.email
     if not email_settings.enabled:
-        logger.info(
-            "Email service disabled via EMAIL_ENABLED; notifications will be skipped."
-        )
+        logger.info("Email service disabled via EMAIL_ENABLED; notifications will be skipped.")
         return None
 
     if email_settings.provider is EmailProvider.SMTP:
