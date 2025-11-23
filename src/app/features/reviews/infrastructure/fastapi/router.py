@@ -16,7 +16,7 @@ reviews_router.add_api_route(
     "/records/{record_id}",
     controllers.list_reviews_for_record,
     methods=["GET"],
-    response_model=list[controllers.ReviewResponse],
+    response_model=controllers.PaginatedReviewsResponse,
     summary="Listar reseñas de una vivienda",
 )
 reviews_router.add_api_route(

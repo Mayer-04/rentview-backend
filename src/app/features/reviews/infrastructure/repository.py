@@ -1,11 +1,9 @@
-from __future__ import annotations
-
 from collections.abc import Sequence
 
 from psycopg.errors import ForeignKeyViolation
-from sqlalchemy import select, text
+from sqlalchemy import func, select, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.features.reviews.domain.exceptions import (
     RecordNotFoundError,
@@ -16,7 +14,7 @@ from app.features.reviews.domain.exceptions import (
 from app.features.reviews.domain.repository import ReviewRepository
 from app.features.reviews.domain.review import Review
 from app.features.reviews.infrastructure.mappers import review_model_to_domain
-from app.features.reviews.infrastructure.models import ReviewModel
+from app.features.reviews.infrastructure.models import ReviewImageModel, ReviewModel
 
 
 class SqlAlchemyReviewRepository(ReviewRepository):
@@ -38,9 +36,14 @@ class SqlAlchemyReviewRepository(ReviewRepository):
         model = ReviewModel(
             record_id=review.record_id,
             title=review.title,
+            email=review.email,
             body=review.body,
             rating=review.rating,
         )
+        if review.images:
+            model.images = [
+                ReviewImageModel(image_url=image.image_url.strip()) for image in review.images
+            ]
         self.session.add(model)
         try:
             self.session.commit()
@@ -54,9 +57,12 @@ class SqlAlchemyReviewRepository(ReviewRepository):
             self.session.rollback()
             raise ReviewPersistenceError("Error al crear la reseña") from exc
 
-    def list_by_record(self, *, record_id: int, limit: int, offset: int) -> Sequence[Review]:
+    def list_by_record(
+        self, *, record_id: int, limit: int, offset: int
+    ) -> tuple[Sequence[Review], int]:
         stmt = (
             select(ReviewModel)
+            .options(selectinload(ReviewModel.images))
             .where(ReviewModel.record_id == record_id)
             .order_by(ReviewModel.created_at.desc())
             .offset(offset)
@@ -64,14 +70,24 @@ class SqlAlchemyReviewRepository(ReviewRepository):
         )
         try:
             models = self.session.scalars(stmt).all()
-            return [review_model_to_domain(model) for model in models]
+
+            total_stmt = select(func.count()).select_from(
+                select(ReviewModel.id).where(ReviewModel.record_id == record_id).subquery()
+            )
+            total = self.session.scalar(total_stmt) or 0
+
+            return [review_model_to_domain(model) for model in models], int(total)
         except SQLAlchemyError as exc:  # pragma: no cover - DB failure
             self.session.rollback()
             raise ReviewPersistenceError("Error al listar reseñas") from exc
 
     def get(self, review_id: int) -> Review | None:
         try:
-            model = self.session.get(ReviewModel, review_id)
+            model = self.session.get(
+                ReviewModel,
+                review_id,
+                options=(selectinload(ReviewModel.images),),
+            )
             return review_model_to_domain(model) if model else None
         except SQLAlchemyError as exc:  # pragma: no cover - DB failure
             self.session.rollback()
@@ -83,6 +99,7 @@ class SqlAlchemyReviewRepository(ReviewRepository):
             raise ReviewNotFoundError(f"Review {review.id} was not found")
 
         model.title = review.title
+        model.email = review.email
         model.body = review.body
         model.rating = review.rating
 

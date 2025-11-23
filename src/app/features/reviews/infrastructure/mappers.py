@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-from app.features.reviews.domain.review import Review
+from app.features.reviews.domain.review import Review, ReviewImage
 from app.features.reviews.infrastructure.models import ReviewModel
 
 
@@ -10,8 +8,18 @@ def review_model_to_domain(model: ReviewModel) -> Review:
         id=model.id,
         record_id=model.record_id,
         title=model.title,
+        email=model.email,
         body=model.body,
         rating=model.rating,
+        images=[
+            ReviewImage(
+                id=image.id,
+                review_id=image.review_id,
+                image_url=image.image_url,
+                created_at=image.created_at,
+            )
+            for image in model.images or []
+        ],
         created_at=model.created_at,
         updated_at=model.updated_at,
     )
