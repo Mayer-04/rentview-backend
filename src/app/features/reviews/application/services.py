@@ -10,6 +10,7 @@ from app.features.reviews.domain.exceptions import (
     InvalidPaginationError,
     InvalidReviewBodyError,
     InvalidReviewEmailError,
+    InvalidReviewImageError,
     InvalidReviewRatingError,
     RecordNotFoundError,
     ReviewNotFoundError,
@@ -27,6 +28,8 @@ logger = logging.getLogger(__name__)
 class ReviewService:
     """Application service orchestrating review operations."""
 
+    ALLOWED_IMAGE_EXTENSIONS = (".jpg", ".png")
+
     def __init__(self, repository: ReviewRepository, email_sender: EmailSender | None = None) -> None:
         self.repository = repository
         self.email_sender = email_sender
@@ -35,6 +38,7 @@ class ReviewService:
         self._validate_email(dto.email)
         self._validate_body(dto.body)
         self._validate_rating(dto.rating)
+        self._validate_images(dto.images)
 
         if not self.repository.record_exists(dto.record_id):
             raise RecordNotFoundError(f"Record {dto.record_id} does not exist")
@@ -89,6 +93,7 @@ class ReviewService:
             self._validate_rating(dto.rating)
         if dto.email is not None:
             self._validate_email(dto.email)
+        # Images are not updatable yet; they are preserved from the existing review.
 
         review = self.repository.get(dto.review_id)
         if review is None:
@@ -186,3 +191,12 @@ class ReviewService:
         )
         if not normalized or not email_pattern.fullmatch(normalized):
             raise InvalidReviewEmailError("El correo electrónico no es válido")
+
+    def _validate_images(self, images: list[str]) -> None:
+        for image in images:
+            normalized = image.strip()
+            if not normalized:
+                raise InvalidReviewImageError("Las URLs de imágenes no pueden estar vacías")
+            trimmed = normalized.split("?")[0].split("#")[0].lower()
+            if not any(trimmed.endswith(ext) for ext in self.ALLOWED_IMAGE_EXTENSIONS):
+                raise InvalidReviewImageError("Las imágenes deben ser archivos .jpg o .png")

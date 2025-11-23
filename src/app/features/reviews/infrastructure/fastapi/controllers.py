@@ -15,6 +15,7 @@ from app.features.reviews.domain.exceptions import (
     InvalidPaginationError,
     InvalidReviewBodyError,
     InvalidReviewEmailError,
+    InvalidReviewImageError,
     InvalidReviewRatingError,
     RecordNotFoundError,
     ReviewNotFoundError,
@@ -33,6 +34,15 @@ def get_review_service(db: Session = Depends(get_db)) -> ReviewService:
     return ReviewService(repository, email_sender=email_sender)
 
 
+class ReviewImageResponse(BaseModel):
+    id: int
+    review_id: int
+    image_url: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class ReviewResponse(BaseModel):
     id: int
     record_id: int
@@ -40,6 +50,7 @@ class ReviewResponse(BaseModel):
     email: str
     body: str
     rating: int
+    images: list["ReviewImageResponse"]
     created_at: datetime
     updated_at: datetime
 
@@ -59,6 +70,7 @@ class ReviewCreateRequest(BaseModel):
     email: EmailStr = Field(max_length=320)
     body: str = Field(min_length=1, max_length=10_000)
     rating: int = Field(ge=1, le=5)
+    images: list[str] = Field(default_factory=list, description="URLs de imágenes opcionales")
 
     @field_validator("email", mode="before")
     @classmethod
@@ -76,6 +88,18 @@ class ReviewCreateRequest(BaseModel):
     @classmethod
     def normalize_title(cls, value: str | None) -> str | None:
         return value.strip() if value is not None else None
+
+    @field_validator("images", mode="before")
+    @classmethod
+    def default_images(cls, value: list[str] | None) -> list[str]:
+        return value or []
+
+    @field_validator("images")
+    @classmethod
+    def normalize_images(cls, value: list[str]) -> list[str]:
+        if any(not isinstance(image, str) for image in value):
+            raise ValueError("Las imágenes deben ser cadenas de texto")
+        return [image.strip() for image in value]
 
 
 class ReviewUpdateRequest(BaseModel):
@@ -120,6 +144,7 @@ def create_review(
             email=str(payload.email),
             body=payload.body,
             rating=payload.rating,
+            images=payload.images,
         )
         review = service.create_review(dto)
     except RecordNotFoundError:
@@ -127,7 +152,12 @@ def create_review(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="record no encontrado",
         ) from None
-    except (InvalidReviewBodyError, InvalidReviewEmailError, InvalidReviewRatingError) as exc:
+    except (
+        InvalidReviewBodyError,
+        InvalidReviewEmailError,
+        InvalidReviewRatingError,
+        InvalidReviewImageError,
+    ) as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(exc),

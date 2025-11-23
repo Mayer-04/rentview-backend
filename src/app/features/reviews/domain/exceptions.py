@@ -18,6 +18,10 @@ class InvalidReviewEmailError(ValueError):
     """Raised when the review email is missing or invalid."""
 
 
+class InvalidReviewImageError(ValueError):
+    """Raised when one or more image URLs are invalid."""
+
+
 class EmptyReviewUpdateError(ValueError):
     """Raised when an update request does not include any fields."""
 

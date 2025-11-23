@@ -17,11 +17,12 @@ Todos los endpoints expuestos por la feature de reseñas están montados bajo el
   "title": "Opcional, hasta 120 caracteres",
   "email": "inquilino@example.com",
   "body": "Texto libre (1-10000 caracteres)",
-  "rating": 1-5
+  "rating": 1-5,
+  "images": ["https://ejemplo.com/foto1.jpg", "https://ejemplo.com/foto2.png"]
 }
 ```
 
-- **Respuesta 201**: objeto `ReviewResponse` con `id`, `record_id`, `title`, `email`, `body`, `rating`, `created_at`, `updated_at`.
+- **Respuesta 201**: objeto `ReviewResponse` con `id`, `record_id`, `title`, `email`, `body`, `rating`, `images`, `created_at`, `updated_at`.
 - **Errores**:
   - 404 si el `record_id` no existe.
   - 422 si el correo, el texto o la calificación no cumplen las validaciones.
@@ -65,12 +66,8 @@ Todos los endpoints expuestos por la feature de reseñas están montados bajo el
 
 ### Imágenes de reseña
 
-- **POST** `/api/v1/reviews/{review_id}/images`
-  - **Body**: `{ "image_url": "https://..." }`
-  - **Respuesta 201**: `ReviewImageResponse` (`id`, `review_id`, `image_url`, `uploaded_at`).
-- **GET** `/api/v1/reviews/{review_id}/images`
-  - **Respuesta 200**: lista de `ReviewImageResponse`.
-- **Errores**: 404 si la reseña no existe.
+- Incluye las URLs en el campo `images` al crear una reseña (`POST /api/v1/reviews`).
+- Las respuestas de `/api/v1/reviews` y `/api/v1/reviews/{review_id}` devuelven el arreglo de imágenes con `id`, `review_id`, `image_url` y `created_at`.
 
 ### Comentarios en reseña
 

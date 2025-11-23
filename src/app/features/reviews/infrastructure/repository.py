@@ -5,7 +5,7 @@ from collections.abc import Sequence
 from psycopg.errors import ForeignKeyViolation
 from sqlalchemy import func, select, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.features.reviews.domain.exceptions import (
     RecordNotFoundError,
@@ -16,7 +16,7 @@ from app.features.reviews.domain.exceptions import (
 from app.features.reviews.domain.repository import ReviewRepository
 from app.features.reviews.domain.review import Review
 from app.features.reviews.infrastructure.mappers import review_model_to_domain
-from app.features.reviews.infrastructure.models import ReviewModel
+from app.features.reviews.infrastructure.models import ReviewImageModel, ReviewModel
 
 
 class SqlAlchemyReviewRepository(ReviewRepository):
@@ -42,6 +42,10 @@ class SqlAlchemyReviewRepository(ReviewRepository):
             body=review.body,
             rating=review.rating,
         )
+        if review.images:
+            model.images = [
+                ReviewImageModel(image_url=image.image_url.strip()) for image in review.images
+            ]
         self.session.add(model)
         try:
             self.session.commit()
@@ -60,6 +64,7 @@ class SqlAlchemyReviewRepository(ReviewRepository):
     ) -> tuple[Sequence[Review], int]:
         stmt = (
             select(ReviewModel)
+            .options(selectinload(ReviewModel.images))
             .where(ReviewModel.record_id == record_id)
             .order_by(ReviewModel.created_at.desc())
             .offset(offset)
@@ -80,7 +85,11 @@ class SqlAlchemyReviewRepository(ReviewRepository):
 
     def get(self, review_id: int) -> Review | None:
         try:
-            model = self.session.get(ReviewModel, review_id)
+            model = self.session.get(
+                ReviewModel,
+                review_id,
+                options=(selectinload(ReviewModel.images),),
+            )
             return review_model_to_domain(model) if model else None
         except SQLAlchemyError as exc:  # pragma: no cover - DB failure
             self.session.rollback()

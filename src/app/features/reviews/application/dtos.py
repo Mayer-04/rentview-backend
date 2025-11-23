@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 
 
@@ -11,6 +11,7 @@ class CreateReviewDTO:
     email: str
     body: str
     rating: int
+    images: list[str] = field(default_factory=list)
 
 
 @dataclass(slots=True)
@@ -41,5 +42,14 @@ class ReviewDTO:
     email: str
     body: str
     rating: int
+    images: list["ReviewImageDTO"]
     created_at: datetime
     updated_at: datetime
+
+
+@dataclass(slots=True)
+class ReviewImageDTO:
+    id: int
+    review_id: int
+    image_url: str
+    created_at: datetime
