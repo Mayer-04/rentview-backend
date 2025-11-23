@@ -4,9 +4,10 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Annotated
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.features.records.domain.models import HousingType, Record
+from app.shared.infrastructure.pagination import PaginationMeta
 
 
 class CreateRecordRequest(BaseModel):
@@ -36,6 +37,45 @@ class CreateRecordRequest(BaseModel):
     @classmethod
     def default_images(cls, value: list[str] | None) -> list[str]:
         return value or []
+
+class UpdateRecordRequest(BaseModel):
+    address: Annotated[str | None, Field(default=None, min_length=1)]
+    country: Annotated[str | None, Field(default=None, min_length=1)]
+    city: Annotated[str | None, Field(default=None, min_length=1)]
+    housing_type: HousingType | None = Field(default=None)
+    monthly_rent: Annotated[
+        Decimal | None,
+        Field(default=None, gt=0, max_digits=12, decimal_places=2),
+    ]
+    images: list[str] | None = Field(default=None, description="URLs de imágenes opcionales")
+
+    @field_validator("housing_type", mode="before")
+    @classmethod
+    def normalize_housing_type(cls, value: HousingType | str | None) -> HousingType | None:
+        if value is None:
+            return None
+        if isinstance(value, HousingType):
+            return value
+        normalized = str(value).strip().lower()
+        return HousingType(normalized)
+
+    @field_validator("images", mode="before")
+    @classmethod
+    def default_images(cls, value: list[str] | None) -> list[str] | None:
+        return value if value is not None else None
+
+    @model_validator(mode="after")
+    def ensure_at_least_one_field(self) -> UpdateRecordRequest:
+        if (
+            self.address is None
+            and self.country is None
+            and self.city is None
+            and self.housing_type is None
+            and self.monthly_rent is None
+            and self.images is None
+        ):
+            raise ValueError("Proporciona al menos un campo para actualizar")
+        return self
 
 
 class UpdateRecordRequest(BaseModel):
@@ -102,3 +142,10 @@ class RecordResponse(BaseModel):
             created_at=record.created_at,
             updated_at=record.updated_at,
         )
+
+
+class PaginatedRecordsResponse(BaseModel):
+    items: list[RecordResponse]
+    meta: PaginationMeta
+
+    model_config = ConfigDict(populate_by_name=True)
