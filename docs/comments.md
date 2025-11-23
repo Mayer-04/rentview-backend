@@ -51,8 +51,8 @@ VALUES ('Calle 123', 'Colombia', 'Bogotá', 'apartamento', 1200000)
 RETURNING id;
 
 -- Usa el id devuelto para crear review
-INSERT INTO reviews (record_id, title, body, rating)
-VALUES (<record_id>, 'Buen lugar', 'Todo correcto, salvo ruido nocturno', 4)
+INSERT INTO reviews (record_id, title, email, body, rating)
+VALUES (<record_id>, 'Buen lugar', 'inquilino@example.com', 'Todo correcto, salvo ruido nocturno', 4)
 RETURNING id;
 ```
 
