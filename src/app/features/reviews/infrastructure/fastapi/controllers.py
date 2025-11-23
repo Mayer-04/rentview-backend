@@ -23,12 +23,14 @@ from app.features.reviews.domain.exceptions import (
 from app.features.reviews.infrastructure.repository import SqlAlchemyReviewRepository
 from app.shared.domain.pagination import PageOutOfRangeError
 from app.shared.infrastructure.database import get_db
+from app.shared.infrastructure.email.factory import get_email_sender
 from app.shared.infrastructure.pagination import PaginationMeta
 
 
 def get_review_service(db: Session = Depends(get_db)) -> ReviewService:
     repository = SqlAlchemyReviewRepository(db)
-    return ReviewService(repository)
+    email_sender = get_email_sender()
+    return ReviewService(repository, email_sender=email_sender)
 
 
 class ReviewResponse(BaseModel):

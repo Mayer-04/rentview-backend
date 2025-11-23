@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import re
 
 from app.features.reviews.application.dtos import CreateReviewDTO, ListReviewsQuery, UpdateReviewDTO
@@ -16,14 +17,19 @@ from app.features.reviews.domain.exceptions import (
 )
 from app.features.reviews.domain.repository import ReviewRepository
 from app.features.reviews.domain.review import Review
+from app.shared.application.email import EmailDeliveryError, EmailMessage, EmailSender
 from app.shared.domain.pagination import PageOutOfRangeError, PaginatedResult
+
+
+logger = logging.getLogger(__name__)
 
 
 class ReviewService:
     """Application service orchestrating review operations."""
 
-    def __init__(self, repository: ReviewRepository) -> None:
+    def __init__(self, repository: ReviewRepository, email_sender: EmailSender | None = None) -> None:
         self.repository = repository
+        self.email_sender = email_sender
 
     def create_review(self, dto: CreateReviewDTO) -> Review:
         self._validate_email(dto.email)
@@ -34,7 +40,9 @@ class ReviewService:
             raise RecordNotFoundError(f"Record {dto.record_id} does not exist")
 
         review = to_review_entity(dto)
-        return self.repository.create(review)
+        created_review = self.repository.create(review)
+        self._notify_review_created(created_review)
+        return created_review
 
     def list_reviews(self, query: ListReviewsQuery) -> PaginatedResult[Review]:
         if not self.repository.record_exists(query.record_id):
@@ -105,6 +113,31 @@ class ReviewService:
         except ReviewPersistenceError:
             # Dejo pasar la excepción de persistencia sin envolver para que el controller la traduzca.
             raise
+
+    def _notify_review_created(self, review: Review) -> None:
+        if self.email_sender is None:
+            return
+
+        title_line = review.title if review.title else "Sin título"
+        body = (
+            "Hola,\n\n"
+            "Hemos recibido tu reseña.\n\n"
+            f"Resumen:\n"
+            f"- Record ID: {review.record_id}\n"
+            f"- Título: {title_line}\n"
+            f"- Calificación: {review.rating}/5\n\n"
+            "Gracias por compartir tu experiencia.\n"
+        )
+        message = EmailMessage(
+            to=review.email,
+            subject="Confirmación de tu reseña",
+            body=body,
+        )
+
+        try:
+            self.email_sender.send(message)
+        except EmailDeliveryError:
+            logger.exception("Fallo el envío del correo de confirmación de reseña")
 
     @staticmethod
     def _validate_body(body: str) -> None:
