@@ -8,3 +8,7 @@ class RecordNotFoundError(Exception):
 
 class CommentNotFoundError(Exception):
     """Raised when the referenced comment does not exist."""
+
+
+class InvalidPaginationError(ValueError):
+    """Raised when pagination parameters are invalid."""

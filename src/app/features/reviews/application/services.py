@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
-
 from app.features.reviews.application.dtos import CreateReviewDTO, ListReviewsQuery, UpdateReviewDTO
 from app.features.reviews.application.mappers import to_review_entity
 from app.features.reviews.domain.exceptions import (
     EmptyReviewUpdateError,
+    InvalidPaginationError,
     InvalidReviewBodyError,
     InvalidReviewRatingError,
     RecordNotFoundError,
@@ -14,6 +13,7 @@ from app.features.reviews.domain.exceptions import (
 )
 from app.features.reviews.domain.repository import ReviewRepository
 from app.features.reviews.domain.review import Review
+from app.shared.domain.pagination import PageOutOfRangeError, PaginatedResult
 
 
 class ReviewService:
@@ -32,14 +32,33 @@ class ReviewService:
         review = to_review_entity(dto)
         return self.repository.create(review)
 
-    def list_reviews(self, query: ListReviewsQuery) -> Sequence[Review]:
+    def list_reviews(self, query: ListReviewsQuery) -> PaginatedResult[Review]:
         if not self.repository.record_exists(query.record_id):
             raise RecordNotFoundError(f"Record {query.record_id} does not exist")
 
-        return self.repository.list_by_record(
+        if query.page < 1:
+            raise InvalidPaginationError("page must be at least 1")
+        if query.page_size <= 0 or query.page_size > 100:
+            raise InvalidPaginationError("page_size must be between 1 and 100")
+
+        reviews, total = self.repository.list_by_record(
             record_id=query.record_id,
-            limit=query.limit,
+            limit=query.page_size,
             offset=query.offset,
+        )
+        total_pages = (total + query.page_size - 1) // query.page_size if total > 0 else 0
+        if total == 0 and query.page > 1:
+            raise PageOutOfRangeError("No hay reseñas disponibles para la página solicitada")
+        if total_pages > 0 and query.page > total_pages:
+            raise PageOutOfRangeError(
+                f"La página solicitada {query.page} excede el total de páginas {total_pages}"
+            )
+
+        return PaginatedResult(
+            items=list(reviews),
+            total=total,
+            page=query.page,
+            page_size=query.page_size,
         )
 
     def get_review(self, review_id: int) -> Review:

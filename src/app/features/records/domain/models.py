@@ -4,6 +4,9 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
+from typing import TypeAlias
+
+from app.shared.domain.pagination import PaginatedResult
 
 
 class HousingType(str, Enum):
@@ -32,15 +35,4 @@ class Record:
     updated_at: datetime | None = None
 
 
-@dataclass
-class PaginatedRecords:
-    items: list[Record]
-    total: int
-    page: int
-    page_size: int
-
-    @property
-    def total_pages(self) -> int:
-        if self.page_size <= 0:
-            return 0
-        return (self.total + self.page_size - 1) // self.page_size
+PaginatedRecords: TypeAlias = PaginatedResult[Record]

@@ -23,8 +23,12 @@ class UpdateReviewDTO:
 @dataclass(slots=True)
 class ListReviewsQuery:
     record_id: int
-    limit: int
-    offset: int
+    page: int
+    page_size: int
+
+    @property
+    def offset(self) -> int:
+        return (self.page - 1) * self.page_size
 
 
 @dataclass(slots=True)

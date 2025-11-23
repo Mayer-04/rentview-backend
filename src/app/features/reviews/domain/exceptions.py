@@ -18,6 +18,10 @@ class EmptyReviewUpdateError(ValueError):
     """Raised when an update request does not include any fields."""
 
 
+class InvalidPaginationError(ValueError):
+    """Raised when pagination parameters are invalid."""
+
+
 class ReviewPersistenceError(Exception):
     """Raised when a persistence operation fails unexpectedly."""
 

@@ -1,3 +1,6 @@
+from app.shared.domain.pagination import PageOutOfRangeError as SharedPageOutOfRangeError
+
+
 class RecordError(Exception):
     """Base domain exception for record use cases."""
 
@@ -18,5 +21,5 @@ class InvalidMonthlyRentError(RecordError):
     """Raised when monthly rent is not a positive amount."""
 
 
-class PageOutOfRangeError(RecordError):
+class PageOutOfRangeError(SharedPageOutOfRangeError, RecordError):
     """Raised when the requested page is beyond available results."""

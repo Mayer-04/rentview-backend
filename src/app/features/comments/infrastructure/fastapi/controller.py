@@ -11,6 +11,8 @@ from sqlalchemy.orm import Session
 from app.features.comments.application.schemas import (
     CommentResponse,
     CreateCommentRequest,
+    PaginatedCommentsResponse,
+    PaginatedSavedRecordsResponse,
     SavedRecordResponse,
     SaveRecordRequest,
     UpdateCommentRequest,
@@ -21,6 +23,7 @@ from app.features.comments.application.services import (
 )
 from app.features.comments.domain.exceptions import (
     CommentNotFoundError,
+    InvalidPaginationError,
     RecordNotFoundError,
     ReviewNotFoundError,
 )
@@ -28,7 +31,9 @@ from app.features.comments.infrastructure.repository import (
     SqlAlchemyCommentsRepository,
     SqlAlchemySavedRecordsRepository,
 )
+from app.shared.domain.pagination import PageOutOfRangeError
 from app.shared.infrastructure.database import get_db
+from app.shared.infrastructure.pagination import PaginationMeta
 
 
 def get_comments_service(db: Session = Depends(get_db)) -> CommentsService:
@@ -65,15 +70,33 @@ def create_comment(
     return CommentResponse.model_validate(comment)
 
 
-@comments_router.get("", response_model=list[CommentResponse])
+@comments_router.get("", response_model=PaginatedCommentsResponse)
 def list_comments(
     review_id: int,
-    limit: int = Query(default=20, ge=1, le=100),
-    offset: int = Query(default=0, ge=0),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
     service: CommentsService = Depends(get_comments_service),
-) -> list[CommentResponse]:
-    comments = service.list_comments(review_id=review_id, limit=limit, offset=offset)
-    return [CommentResponse.model_validate(comment) for comment in comments]
+) -> PaginatedCommentsResponse:
+    try:
+        result = service.list_comments(
+            review_id=review_id,
+            page=page,
+            page_size=page_size,
+        )
+    except PageOutOfRangeError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except InvalidPaginationError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+    comments = [CommentResponse.model_validate(comment) for comment in result.items]
+    return PaginatedCommentsResponse(
+        items=comments,
+        meta=PaginationMeta(
+            page=result.page,
+            page_size=result.page_size,
+            total=result.total,
+            total_pages=result.total_pages,
+        ),
+    )
 
 
 @comments_router.put(
@@ -134,14 +157,30 @@ def save_record(
     return validated.model_copy(update={"already_saved": not created})
 
 
-@saved_records_router.get("", response_model=list[SavedRecordResponse])
+@saved_records_router.get("", response_model=PaginatedSavedRecordsResponse)
 def list_saved_records(
-    limit: int = Query(default=50, ge=1, le=200),
-    offset: int = Query(default=0, ge=0),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=200),
     service: SavedRecordsService = Depends(get_saved_records_service),
-) -> list[SavedRecordResponse]:
-    saved_records = service.list_saved(limit=limit, offset=offset)
-    return [SavedRecordResponse.model_validate(saved_record) for saved_record in saved_records]
+) -> PaginatedSavedRecordsResponse:
+    try:
+        result = service.list_saved(page=page, page_size=page_size)
+    except PageOutOfRangeError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except InvalidPaginationError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+    saved_records = [
+        SavedRecordResponse.model_validate(saved_record) for saved_record in result.items
+    ]
+    return PaginatedSavedRecordsResponse(
+        items=saved_records,
+        meta=PaginationMeta(
+            page=result.page,
+            page_size=result.page_size,
+            total=result.total,
+            total_pages=result.total_pages,
+        ),
+    )
 
 
 @saved_records_router.delete(

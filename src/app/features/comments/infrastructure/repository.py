@@ -39,7 +39,7 @@ class SqlAlchemyCommentsRepository(CommentsRepository):
                 raise ReviewNotFoundError(f"Review {review_id} not found") from exc
             raise
 
-    def list(self, review_id: int, limit: int, offset: int) -> list[Comment]:
+    def list(self, review_id: int, limit: int, offset: int) -> tuple[list[Comment], int]:
         stmt = text(
             """
             SELECT id, review_id, body, created_at, updated_at
@@ -52,7 +52,19 @@ class SqlAlchemyCommentsRepository(CommentsRepository):
         result = self._session.execute(
             stmt, {"review_id": review_id, "limit": limit, "offset": offset}
         )
-        return [Comment(**row) for row in result.mappings().all()]
+        items = [Comment(**row) for row in result.mappings().all()]
+
+        total_stmt = text(
+            """
+            SELECT COUNT(*) AS total
+            FROM comments
+            WHERE review_id = :review_id
+            """
+        )
+        total_result = self._session.execute(total_stmt, {"review_id": review_id}).scalar()
+        total = int(total_result or 0)
+
+        return items, total
 
     def update(self, comment_id: int, review_id: int, body: str) -> Comment:
         stmt = text(
@@ -123,7 +135,7 @@ class SqlAlchemySavedRecordsRepository(SavedRecordsRepository):
                 raise RecordNotFoundError(f"Record {record_id} not found") from exc
             raise
 
-    def list(self, limit: int, offset: int) -> list[SavedRecord]:
+    def list(self, limit: int, offset: int) -> tuple[list[SavedRecord], int]:
         stmt = text(
             """
             SELECT id, record_id, saved_at
@@ -133,7 +145,13 @@ class SqlAlchemySavedRecordsRepository(SavedRecordsRepository):
             """
         )
         result = self._session.execute(stmt, {"limit": limit, "offset": offset})
-        return [SavedRecord(**row) for row in result.mappings().all()]
+        items = [SavedRecord(**row) for row in result.mappings().all()]
+
+        total_stmt = text("SELECT COUNT(*) AS total FROM saved_records")
+        total_result = self._session.execute(total_stmt).scalar()
+        total = int(total_result or 0)
+
+        return items, total
 
     def delete(self, record_id: int) -> bool:
         stmt = text("DELETE FROM saved_records WHERE record_id = :record_id RETURNING id")

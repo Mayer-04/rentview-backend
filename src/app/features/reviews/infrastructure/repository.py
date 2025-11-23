@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from psycopg.errors import ForeignKeyViolation
-from sqlalchemy import select, text
+from sqlalchemy import func, select, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -54,7 +54,9 @@ class SqlAlchemyReviewRepository(ReviewRepository):
             self.session.rollback()
             raise ReviewPersistenceError("Error al crear la reseña") from exc
 
-    def list_by_record(self, *, record_id: int, limit: int, offset: int) -> Sequence[Review]:
+    def list_by_record(
+        self, *, record_id: int, limit: int, offset: int
+    ) -> tuple[Sequence[Review], int]:
         stmt = (
             select(ReviewModel)
             .where(ReviewModel.record_id == record_id)
@@ -64,7 +66,13 @@ class SqlAlchemyReviewRepository(ReviewRepository):
         )
         try:
             models = self.session.scalars(stmt).all()
-            return [review_model_to_domain(model) for model in models]
+
+            total_stmt = select(func.count()).select_from(
+                select(ReviewModel.id).where(ReviewModel.record_id == record_id).subquery()
+            )
+            total = self.session.scalar(total_stmt) or 0
+
+            return [review_model_to_domain(model) for model in models], int(total)
         except SQLAlchemyError as exc:  # pragma: no cover - DB failure
             self.session.rollback()
             raise ReviewPersistenceError("Error al listar reseñas") from exc

@@ -3,6 +3,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
+from app.shared.infrastructure.pagination import PaginationMeta
 CommentBody = Annotated[
     str, StringConstraints(min_length=1, max_length=2000, strip_whitespace=True)
 ]
@@ -43,3 +44,17 @@ class SavedRecordResponse(BaseModel):
     already_saved: bool = False
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class PaginatedCommentsResponse(BaseModel):
+    items: list[CommentResponse]
+    meta: PaginationMeta
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class PaginatedSavedRecordsResponse(BaseModel):
+    items: list[SavedRecordResponse]
+    meta: PaginationMeta
+
+    model_config = ConfigDict(populate_by_name=True)

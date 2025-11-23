@@ -12,6 +12,7 @@ from app.features.reviews.application.mappers import to_review_dto
 from app.features.reviews.application.services import ReviewService
 from app.features.reviews.domain.exceptions import (
     EmptyReviewUpdateError,
+    InvalidPaginationError,
     InvalidReviewBodyError,
     InvalidReviewRatingError,
     RecordNotFoundError,
@@ -19,7 +20,9 @@ from app.features.reviews.domain.exceptions import (
     ReviewPersistenceError,
 )
 from app.features.reviews.infrastructure.repository import SqlAlchemyReviewRepository
+from app.shared.domain.pagination import PageOutOfRangeError
 from app.shared.infrastructure.database import get_db
+from app.shared.infrastructure.pagination import PaginationMeta
 
 
 def get_review_service(db: Session = Depends(get_db)) -> ReviewService:
@@ -37,6 +40,13 @@ class ReviewResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class PaginatedReviewsResponse(BaseModel):
+    items: list[ReviewResponse]
+    meta: PaginationMeta
+
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class ReviewCreateRequest(BaseModel):
@@ -115,24 +125,36 @@ def create_review(
 
 def list_reviews_for_record(
     record_id: int,
-    limit: Annotated[int, Query(ge=1, le=100)] = 20,
-    offset: Annotated[int, Query(ge=0)] = 0,
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=100)] = 20,
     service: ReviewService = Depends(get_review_service),
-) -> list[ReviewResponse]:
+) -> PaginatedReviewsResponse:
     try:
-        query = ListReviewsQuery(record_id=record_id, limit=limit, offset=offset)
-        reviews = service.list_reviews(query)
+        query = ListReviewsQuery(record_id=record_id, page=page, page_size=page_size)
+        result = service.list_reviews(query)
     except RecordNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="record no encontrado",
         ) from None
+    except PageOutOfRangeError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except InvalidPaginationError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
     except ReviewPersistenceError as exc:  # pragma: no cover - DB failure
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="No se pudieron listar las reseñas",
         ) from exc
-    return [ReviewResponse.model_validate(to_review_dto(review)) for review in reviews]
+    return PaginatedReviewsResponse(
+        items=[ReviewResponse.model_validate(to_review_dto(review)) for review in result.items],
+        meta=PaginationMeta(
+            page=result.page,
+            page_size=result.page_size,
+            total=result.total,
+            total_pages=result.total_pages,
+        ),
+    )
 
 
 def get_review(
