@@ -3,9 +3,15 @@ from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.features.records.infrastructure.fastapi.router import records_router
-from app.shared.infrastructure.database import close_connection_pool, open_connection_pool
+from app.features.reviews.infrastructure.fastapi.router import reviews_router
+from app.features.comments.infrastructure.fastapi.router import comments_router
+from app.shared.infrastructure.database import (
+    close_connection_pool,
+    open_connection_pool,
+)
 from app.shared.infrastructure.settings import settings
 
 
@@ -26,7 +32,17 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[str(origin) for origin in settings.cors.allow_origins],
+    allow_credentials=settings.cors.allow_credentials,
+    allow_methods=settings.cors.allow_methods,
+    allow_headers=settings.cors.allow_headers,
+)
+
+app.include_router(reviews_router, prefix=settings.app.api_prefix)
 app.include_router(records_router, prefix=settings.app.api_prefix)
+app.include_router(comments_router, prefix=settings.app.api_prefix)
 
 
 @app.get("/")

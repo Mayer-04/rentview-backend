@@ -1,0 +1,26 @@
+from collections.abc import Sequence
+from typing import Protocol
+
+from app.features.reviews.domain.review import Review, ReviewImage
+
+
+class ReviewRepository(Protocol):
+    """Contract for persisting and retrieving reviews."""
+
+    def record_exists(self, record_id: int) -> bool: ...
+
+    def create(self, review: Review) -> Review: ...
+
+    def list_by_record(
+        self, *, record_id: int, limit: int, offset: int
+    ) -> tuple[Sequence[Review], int]: ...
+
+    def get(self, review_id: int) -> Review | None: ...
+
+    def save(self, review: Review, *, replace_images: bool = False) -> Review: ...
+
+    def delete(self, review_id: int) -> None: ...
+
+    def add_image(self, review_id: int, image_url: str) -> ReviewImage: ...
+
+    def delete_image(self, review_id: int, image_id: int) -> None: ...
