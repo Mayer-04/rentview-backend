@@ -1,11 +1,13 @@
 from enum import Enum
 from functools import lru_cache
 from typing import cast
+from typing import cast
 
 from pydantic import (
     AliasChoices,
     AnyHttpUrl,
     BaseModel,
+    EmailStr,
     EmailStr,
     Field,
 )
@@ -162,6 +164,9 @@ class CorsSettings(BaseModel):
     allow_origins: list[AnyHttpUrl] = Field(
         default_factory=lambda: DEFAULT_CORS_ALLOW_ORIGINS.copy()
     )
+    allow_origins: list[AnyHttpUrl] = Field(
+        default_factory=lambda: DEFAULT_CORS_ALLOW_ORIGINS.copy()
+    )
     allow_credentials: bool = Field(default=False)
     allow_methods: list[str] = Field(default_factory=lambda: ["*"])
     allow_headers: list[str] = Field(default_factory=lambda: ["*"])
@@ -185,6 +190,7 @@ class Settings(BaseSettings):
     log_level: str = Field(default="info")
     app: AppSettings = Field(default_factory=AppSettings)
     database: DatabaseSettings = Field(default_factory=DatabaseSettings)
+    email: EmailSettings = Field(default_factory=EmailSettings)
     email: EmailSettings = Field(default_factory=EmailSettings)
     cors: CorsSettings = Field(default_factory=CorsSettings)
 
