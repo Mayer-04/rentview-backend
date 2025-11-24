@@ -23,5 +23,6 @@ def get_email_sender() -> EmailSender | None:
     if email_settings.provider is EmailProvider.SMTP:
         return SmtpEmailSender(email_settings)
 
-    raise UnsupportedEmailProviderError(f"Proveedor de email no soportado: {email_settings.provider}")
-
+    raise UnsupportedEmailProviderError(
+        f"Proveedor de email no soportado: {email_settings.provider}"
+    )

@@ -58,9 +58,7 @@ class RecordService:
         country = existing_record.country if command.country is None else command.country.strip()
         city = existing_record.city if command.city is None else command.city.strip()
         monthly_rent = (
-            existing_record.monthly_rent
-            if command.monthly_rent is None
-            else command.monthly_rent
+            existing_record.monthly_rent if command.monthly_rent is None else command.monthly_rent
         )
 
         self._validate_required_fields(

@@ -30,7 +30,9 @@ class ReviewService:
 
     ALLOWED_IMAGE_EXTENSIONS = (".jpg", ".png")
 
-    def __init__(self, repository: ReviewRepository, email_sender: EmailSender | None = None) -> None:
+    def __init__(
+        self, repository: ReviewRepository, email_sender: EmailSender | None = None
+    ) -> None:
         self.repository = repository
         self.email_sender = email_sender
 
@@ -200,7 +202,9 @@ class ReviewService:
     def _validate_email(email: str) -> None:
         normalized = email.strip()
         if len(normalized) > 320:
-            raise InvalidReviewEmailError("El correo electrónico excede la longitud máxima permitida")
+            raise InvalidReviewEmailError(
+                "El correo electrónico excede la longitud máxima permitida"
+            )
         # RFC 5322-like pattern without allowing spaces or uncommon symbols.
         email_pattern = re.compile(
             r"^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+$",

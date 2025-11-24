@@ -4,6 +4,7 @@ from typing import Annotated
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from app.shared.infrastructure.pagination import PaginationMeta
+
 CommentBody = Annotated[
     str, StringConstraints(min_length=1, max_length=2000, strip_whitespace=True)
 ]

@@ -38,6 +38,7 @@ class CreateRecordRequest(BaseModel):
     def default_images(cls, value: list[str] | None) -> list[str]:
         return value or []
 
+
 class UpdateRecordRequest(BaseModel):
     address: Annotated[str | None, Field(default=None, min_length=1)]
     country: Annotated[str | None, Field(default=None, min_length=1)]
@@ -79,7 +80,9 @@ class UpdateRecordRequest(BaseModel):
 
 
 class UpdateRecordRequest(BaseModel):
-    address: Annotated[str | None, Field(None, min_length=1, description="Dirección de la vivienda")]
+    address: Annotated[
+        str | None, Field(None, min_length=1, description="Dirección de la vivienda")
+    ]
     country: Annotated[
         str | None, Field(None, min_length=1, description="País donde se encuentra la vivienda")
     ]
