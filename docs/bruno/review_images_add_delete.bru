@@ -1,0 +1,47 @@
+meta {
+  name: Agregar imagen a review
+  type: http
+  seq: 1
+}
+
+request {
+  method: POST
+  url: http://localhost:8080/api/v1/reviews/{{review_id}}/images
+  headers: {
+    Content-Type: application/json
+  }
+  body: json({
+    "image_url": "https://example.com/reviews/foto-1.jpg"
+  })
+}
+
+env {
+  review_id: 1
+}
+
+assert {
+  status: 201
+  jsonpath "$.image_url" contains ".jpg"
+}
+
+---
+
+meta {
+  name: Eliminar imagen de review
+  type: http
+  seq: 2
+}
+
+request {
+  method: DELETE
+  url: http://localhost:8080/api/v1/reviews/{{review_id}}/images/{{image_id}}
+}
+
+env {
+  review_id: 1
+  image_id: 1
+}
+
+assert {
+  status: 204
+}

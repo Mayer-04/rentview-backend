@@ -21,6 +21,7 @@ class UpdateReviewDTO:
     email: str | None = None
     body: str | None = None
     rating: int | None = None
+    images: list[str] | None = None
 
 
 @dataclass(slots=True)

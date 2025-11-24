@@ -51,7 +51,8 @@ Todos los endpoints expuestos por la feature de reseñas están montados bajo el
   "title": "Nuevo título",
   "email": "nuevo-correo@example.com",
   "body": "Nuevo texto",
-  "rating": 4
+  "rating": 4,
+  "images": ["https://...jpg"] // omite para mantener, envía lista vacía para eliminar todas
 }
 ```
 
@@ -67,6 +68,9 @@ Todos los endpoints expuestos por la feature de reseñas están montados bajo el
 ### Imágenes de reseña
 
 - Incluye las URLs en el campo `images` al crear una reseña (`POST /api/v1/reviews`).
+- Endpoints específicos:
+  - `POST /api/v1/reviews/{review_id}/images` → Body: `{"image_url":"https://...jpg|png"}`. Respuesta `201` con `ReviewImageResponse`.
+  - `DELETE /api/v1/reviews/{review_id}/images/{image_id}` → Respuesta `204`.
 - Las respuestas de `/api/v1/reviews` y `/api/v1/reviews/{review_id}` devuelven el arreglo de imágenes con `id`, `review_id`, `image_url` y `created_at`.
 
 ### Comentarios en reseña

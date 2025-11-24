@@ -40,5 +40,20 @@ reviews_router.add_api_route(
     status_code=204,
     summary="Eliminar una reseña",
 )
+reviews_router.add_api_route(
+    "/{review_id}/images",
+    controllers.add_review_image,
+    methods=["POST"],
+    response_model=controllers.ReviewImageResponse,
+    status_code=201,
+    summary="Agregar imagen a una reseña",
+)
+reviews_router.add_api_route(
+    "/{review_id}/images/{image_id}",
+    controllers.delete_review_image,
+    methods=["DELETE"],
+    status_code=204,
+    summary="Eliminar imagen de una reseña",
+)
 
 __all__ = ["reviews_router"]

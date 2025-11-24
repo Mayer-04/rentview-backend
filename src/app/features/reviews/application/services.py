@@ -17,7 +17,7 @@ from app.features.reviews.domain.exceptions import (
     ReviewPersistenceError,
 )
 from app.features.reviews.domain.repository import ReviewRepository
-from app.features.reviews.domain.review import Review
+from app.features.reviews.domain.review import Review, ReviewImage
 from app.shared.application.email import EmailDeliveryError, EmailMessage, EmailSender
 from app.shared.domain.pagination import PageOutOfRangeError, PaginatedResult
 
@@ -84,7 +84,13 @@ class ReviewService:
         return review
 
     def update_review(self, dto: UpdateReviewDTO) -> Review:
-        if dto.title is None and dto.body is None and dto.rating is None:
+        if (
+            dto.title is None
+            and dto.body is None
+            and dto.rating is None
+            and dto.email is None
+            and dto.images is None
+        ):
             raise EmptyReviewUpdateError("Proporciona al menos un campo para actualizar")
 
         if dto.body is not None:
@@ -93,7 +99,8 @@ class ReviewService:
             self._validate_rating(dto.rating)
         if dto.email is not None:
             self._validate_email(dto.email)
-        # Images are not updatable yet; they are preserved from the existing review.
+        if dto.images is not None:
+            self._validate_images(dto.images)
 
         review = self.repository.get(dto.review_id)
         if review is None:
@@ -107,8 +114,11 @@ class ReviewService:
             review.body = dto.body.strip()
         if dto.rating is not None:
             review.rating = dto.rating
+        replace_images = dto.images is not None
+        if replace_images:
+            review.images = [ReviewImage(image_url=image.strip()) for image in dto.images or []]
 
-        return self.repository.save(review)
+        return self.repository.save(review, replace_images=replace_images)
 
     def delete_review(self, review_id: int) -> None:
         try:
@@ -117,6 +127,13 @@ class ReviewService:
             raise
         except ReviewPersistenceError:
             raise
+
+    def add_review_image(self, review_id: int, image_url: str) -> ReviewImage:
+        self._validate_images([image_url])
+        return self.repository.add_image(review_id, image_url.strip())
+
+    def delete_review_image(self, review_id: int, image_id: int) -> None:
+        self.repository.delete_image(review_id, image_id)
 
     def _notify_review_created(self, review: Review) -> None:
         if self.email_sender is None:

@@ -10,12 +10,16 @@ from sqlalchemy.orm import Session, selectinload
 from app.features.reviews.domain.exceptions import (
     RecordNotFoundError,
     ReviewDeletionError,
+    ReviewImageNotFoundError,
     ReviewNotFoundError,
     ReviewPersistenceError,
 )
 from app.features.reviews.domain.repository import ReviewRepository
-from app.features.reviews.domain.review import Review
-from app.features.reviews.infrastructure.mappers import review_model_to_domain
+from app.features.reviews.domain.review import Review, ReviewImage
+from app.features.reviews.infrastructure.mappers import (
+    review_image_model_to_domain,
+    review_model_to_domain,
+)
 from app.features.reviews.infrastructure.models import ReviewImageModel, ReviewModel
 
 
@@ -95,7 +99,7 @@ class SqlAlchemyReviewRepository(ReviewRepository):
             self.session.rollback()
             raise ReviewPersistenceError("Error al obtener la reseña") from exc
 
-    def save(self, review: Review) -> Review:
+    def save(self, review: Review, *, replace_images: bool = False) -> Review:
         model = self.session.get(ReviewModel, review.id)
         if model is None:
             raise ReviewNotFoundError(f"Review {review.id} was not found")
@@ -104,6 +108,10 @@ class SqlAlchemyReviewRepository(ReviewRepository):
         model.email = review.email
         model.body = review.body
         model.rating = review.rating
+        if replace_images:
+            model.images.clear()
+            for image in review.images:
+                model.images.append(ReviewImageModel(image_url=image.image_url.strip()))
 
         try:
             self.session.commit()
@@ -125,6 +133,39 @@ class SqlAlchemyReviewRepository(ReviewRepository):
         except SQLAlchemyError as exc:  # pragma: no cover - DB failure
             self.session.rollback()
             raise ReviewDeletionError("Error al eliminar la reseña") from exc
+
+    def add_image(self, review_id: int, image_url: str) -> ReviewImage:
+        review = self.session.get(ReviewModel, review_id)
+        if review is None:
+            raise ReviewNotFoundError(f"Review {review_id} was not found")
+
+        image_model = ReviewImageModel(review_id=review_id, image_url=image_url)
+        self.session.add(image_model)
+        try:
+            self.session.commit()
+            self.session.refresh(image_model)
+            return review_image_model_to_domain(image_model)
+        except SQLAlchemyError as exc:  # pragma: no cover - DB failure
+            self.session.rollback()
+            raise ReviewPersistenceError("Error al guardar la imagen de la reseña") from exc
+
+    def delete_image(self, review_id: int, image_id: int) -> None:
+        stmt = select(ReviewImageModel).where(
+            ReviewImageModel.id == image_id, ReviewImageModel.review_id == review_id
+        )
+        try:
+            image = self.session.scalars(stmt).first()
+            if image is None:
+                raise ReviewImageNotFoundError(
+                    f"Image {image_id} for review {review_id} was not found"
+                )
+            self.session.delete(image)
+            self.session.commit()
+        except ReviewImageNotFoundError:
+            raise
+        except SQLAlchemyError as exc:  # pragma: no cover - DB failure
+            self.session.rollback()
+            raise ReviewDeletionError("Error al eliminar la imagen de la reseña") from exc
 
     @staticmethod
     def _handle_integrity_error(exc: IntegrityError, *, record_id: int) -> None:
