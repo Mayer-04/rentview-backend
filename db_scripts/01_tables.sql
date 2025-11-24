@@ -52,7 +52,6 @@ CREATE TABLE review_images (
 
 CREATE INDEX idx_review_images_review ON review_images(review_id);
 
-
 CREATE TABLE comments (
     id BIGSERIAL PRIMARY KEY,
     review_id BIGINT NOT NULL REFERENCES reviews(id) ON DELETE CASCADE,
@@ -64,7 +63,6 @@ CREATE TABLE comments (
 CREATE INDEX idx_comments_review_id ON comments(review_id);
 
 CREATE INDEX idx_comments_review_created ON comments(review_id, created_at DESC);
-
 
 CREATE TABLE saved_records (
     id BIGSERIAL PRIMARY KEY,
