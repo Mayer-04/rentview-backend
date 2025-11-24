@@ -44,6 +44,7 @@ app.include_router(reviews_router, prefix=settings.app.api_prefix)
 app.include_router(records_router, prefix=settings.app.api_prefix)
 app.include_router(comments_router, prefix=settings.app.api_prefix)
 
+
 @app.get("/")
 def read_root() -> dict[str, str]:
     return {"Hello": "World"}
@@ -55,9 +56,7 @@ async def health() -> dict[str, str]:
 
 
 async def main() -> None:
-    config = uvicorn.Config(
-        "main:app", port=settings.app.port, log_level=settings.log_level
-    )
+    config = uvicorn.Config("main:app", port=settings.app.port, log_level=settings.log_level)
     server = uvicorn.Server(config)
     await server.serve()
 
