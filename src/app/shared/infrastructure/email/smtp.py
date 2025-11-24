@@ -100,5 +100,7 @@ class SmtpEmailSender(EmailSender):
         if isinstance(recipients, str):
             normalized = [recipients.strip()] if recipients.strip() else []
         else:
-            normalized = [recipient.strip() for recipient in recipients if recipient and recipient.strip()]
+            normalized = [
+                recipient.strip() for recipient in recipients if recipient and recipient.strip()
+            ]
         return [recipient for recipient in normalized if recipient]

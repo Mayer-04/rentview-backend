@@ -142,9 +142,7 @@ def test_update_record_replaces_fields_and_images() -> None:
     repository = MagicMock()
     existing = _sample_record()
     repository.get.return_value = existing
-    repository.update.side_effect = lambda record, replace_images: Record(
-        **record.__dict__
-    )
+    repository.update.side_effect = lambda record, replace_images: Record(**record.__dict__)
     service = RecordService(repository)
     command = UpdateRecordCommand(
         address=" New Address ",
