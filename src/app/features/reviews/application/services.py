@@ -139,6 +139,10 @@ class ReviewService:
 
     def _notify_review_created(self, review: Review) -> None:
         if self.email_sender is None:
+            logger.warning(
+                "Email sender no configurado; omitiendo envio de correo de reseña. review_id=%s",
+                review.id,
+            )
             return
 
         title_line = review.title if review.title else "Sin título"
@@ -185,6 +189,12 @@ class ReviewService:
 
         try:
             self.email_sender.send(message)
+            logger.info(
+                "Correo de confirmacion de reseña enviado. review_id=%s to=%s subject=%s",
+                review.id,
+                review.email,
+                subject,
+            )
         except EmailDeliveryError:
             logger.exception("Fallo el envío del correo de confirmación de reseña")
 

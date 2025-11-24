@@ -43,12 +43,23 @@ class SmtpEmailSender(EmailSender):
             from_email=from_email,
         )
 
+        logger.info(
+            "Intentando enviar correo via SMTP. to=%s from=%s host=%s port=%s tls=%s ssl=%s",
+            recipients,
+            from_email,
+            self._settings.smtp_host,
+            self._settings.smtp_port,
+            self._settings.smtp_use_tls,
+            self._settings.smtp_use_ssl,
+        )
+
         try:
             self._send_via_smtp(
                 mime_message=mime_message,
                 username=smtp_username,
                 password=smtp_password,
             )
+            logger.info("Correo enviado correctamente a %s", recipients)
         except Exception as exc:  # pragma: no cover - network failures
             logger.exception("No se pudo enviar el correo mediante SMTP")
             raise EmailDeliveryError("No se pudo enviar el correo") from exc
