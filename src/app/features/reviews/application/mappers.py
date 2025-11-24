@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from app.features.reviews.application.dtos import CreateReviewDTO, ReviewDTO, ReviewImageDTO
 from app.features.reviews.domain.review import Review, ReviewImage
 

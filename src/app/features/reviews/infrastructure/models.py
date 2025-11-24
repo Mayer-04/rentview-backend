@@ -3,6 +3,7 @@ from datetime import datetime
 from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+# Reuse the same metadata as the records models so FK to records resolves correctly.
 from app.features.records.infrastructure.persistence.models import Base
 
 

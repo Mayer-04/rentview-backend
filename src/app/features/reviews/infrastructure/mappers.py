@@ -1,5 +1,5 @@
 from app.features.reviews.domain.review import Review, ReviewImage
-from app.features.reviews.infrastructure.models import ReviewModel
+from app.features.reviews.infrastructure.models import ReviewImageModel, ReviewModel
 
 
 def review_model_to_domain(model: ReviewModel) -> Review:
@@ -22,4 +22,13 @@ def review_model_to_domain(model: ReviewModel) -> Review:
         ],
         created_at=model.created_at,
         updated_at=model.updated_at,
+    )
+
+
+def review_image_model_to_domain(model: ReviewImageModel) -> ReviewImage:
+    return ReviewImage(
+        id=model.id,
+        review_id=model.review_id,
+        image_url=model.image_url,
+        created_at=model.created_at,
     )

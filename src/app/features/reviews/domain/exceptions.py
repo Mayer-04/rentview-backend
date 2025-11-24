@@ -22,6 +22,10 @@ class InvalidReviewImageError(ValueError):
     """Raised when one or more image URLs are invalid."""
 
 
+class ReviewImageNotFoundError(Exception):
+    """Raised when a review image cannot be found for the given review."""
+
+
 class EmptyReviewUpdateError(ValueError):
     """Raised when an update request does not include any fields."""
 

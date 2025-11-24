@@ -16,6 +16,7 @@ from app.features.reviews.domain.exceptions import (
     InvalidReviewImageError,
     InvalidReviewRatingError,
     RecordNotFoundError,
+    ReviewImageNotFoundError,
     ReviewNotFoundError,
     ReviewPersistenceError,
 )
@@ -39,6 +40,15 @@ class ReviewImageResponse(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ReviewImageCreateRequest(BaseModel):
+    image_url: str = Field(..., min_length=1, description="URL de la imagen (.jpg/.png)")
+
+    @field_validator("image_url")
+    @classmethod
+    def normalize_image_url(cls, value: str) -> str:
+        return value.strip()
 
 
 class ReviewResponse(BaseModel):
@@ -105,10 +115,20 @@ class ReviewUpdateRequest(BaseModel):
     email: EmailStr | None = Field(default=None, max_length=320)
     body: str | None = Field(default=None, max_length=10_000)
     rating: int | None = Field(default=None, ge=1, le=5)
+    images: list[str] | None = Field(
+        default=None,
+        description="URLs de imágenes; envía lista vacía para limpiar, omite para mantener",
+    )
 
     @model_validator(mode="after")
     def ensure_at_least_one_field(self) -> ReviewUpdateRequest:
-        if self.title is None and self.body is None and self.rating is None and self.email is None:
+        if (
+            self.title is None
+            and self.body is None
+            and self.rating is None
+            and self.email is None
+            and self.images is None
+        ):
             raise ValueError("Proporciona al menos un campo para actualizar")
         return self
 
@@ -130,6 +150,15 @@ class ReviewUpdateRequest(BaseModel):
     @classmethod
     def normalize_title(cls, value: str | None) -> str | None:
         return value.strip() if value is not None else None
+
+    @field_validator("images", mode="before")
+    @classmethod
+    def normalize_images(cls, value: list[str] | None) -> list[str] | None:
+        if value is None:
+            return None
+        if any(not isinstance(image, str) for image in value):
+            raise ValueError("Las imágenes deben ser cadenas de texto")
+        return [image.strip() for image in value]
 
 
 def create_review(
@@ -234,6 +263,7 @@ def update_review(
             email=str(payload.email) if payload.email is not None else None,
             body=payload.body,
             rating=payload.rating,
+            images=payload.images,
         )
         review = service.update_review(dto)
     except ReviewNotFoundError:
@@ -271,4 +301,48 @@ def delete_review(review_id: int, service: ReviewService = Depends(get_review_se
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="No se pudo eliminar la reseña",
+        ) from exc
+
+
+def add_review_image(
+    review_id: int,
+    payload: ReviewImageCreateRequest,
+    service: ReviewService = Depends(get_review_service),
+) -> ReviewImageResponse:
+    try:
+        image = service.add_review_image(review_id, payload.image_url)
+    except ReviewNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="reseña no encontrada",
+        ) from None
+    except InvalidReviewImageError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        ) from None
+    except ReviewPersistenceError as exc:  # pragma: no cover - DB failure
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="No se pudo guardar la imagen",
+        ) from exc
+    return ReviewImageResponse.model_validate(image)
+
+
+def delete_review_image(
+    review_id: int,
+    image_id: int,
+    service: ReviewService = Depends(get_review_service),
+) -> None:
+    try:
+        service.delete_review_image(review_id, image_id)
+    except ReviewImageNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="imagen_no_encontrada",
+        ) from None
+    except ReviewPersistenceError as exc:  # pragma: no cover - DB failure
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="No se pudo eliminar la imagen",
         ) from exc
