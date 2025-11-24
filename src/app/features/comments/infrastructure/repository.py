@@ -94,9 +94,7 @@ class SqlAlchemyCommentsRepository(CommentsRepository):
             RETURNING id
             """
         )
-        result = self._session.execute(
-            stmt, {"comment_id": comment_id, "review_id": review_id}
-        )
+        result = self._session.execute(stmt, {"comment_id": comment_id, "review_id": review_id})
         self._session.commit()
         return result.first() is not None
 
@@ -158,4 +156,3 @@ class SqlAlchemySavedRecordsRepository(SavedRecordsRepository):
         result = self._session.execute(stmt, {"record_id": record_id})
         self._session.commit()
         return result.first() is not None
-    

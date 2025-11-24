@@ -86,7 +86,9 @@ def list_comments(
     except PageOutOfRangeError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except InvalidPaginationError as exc:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
+        ) from exc
     comments = [CommentResponse.model_validate(comment) for comment in result.items]
     return PaginatedCommentsResponse(
         items=comments,
@@ -168,7 +170,9 @@ def list_saved_records(
     except PageOutOfRangeError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except InvalidPaginationError as exc:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
+        ) from exc
     saved_records = [
         SavedRecordResponse.model_validate(saved_record) for saved_record in result.items
     ]

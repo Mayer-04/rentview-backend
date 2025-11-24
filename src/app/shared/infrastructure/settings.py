@@ -159,7 +159,9 @@ DEFAULT_CORS_ALLOW_ORIGINS = cast(
 
 
 class CorsSettings(BaseModel):
-    allow_origins: list[AnyHttpUrl] = Field(default_factory=lambda: DEFAULT_CORS_ALLOW_ORIGINS.copy())
+    allow_origins: list[AnyHttpUrl] = Field(
+        default_factory=lambda: DEFAULT_CORS_ALLOW_ORIGINS.copy()
+    )
     allow_credentials: bool = Field(default=False)
     allow_methods: list[str] = Field(default_factory=lambda: ["*"])
     allow_headers: list[str] = Field(default_factory=lambda: ["*"])
