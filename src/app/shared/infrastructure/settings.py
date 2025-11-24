@@ -98,7 +98,7 @@ class EmailSettings(BaseSettings):
     )
 
     enabled: bool = Field(
-        default=False,
+        default=True,
         validation_alias=AliasChoices("EMAIL_ENABLED", "EMAIL__ENABLED"),
     )
     provider: EmailProvider = Field(
