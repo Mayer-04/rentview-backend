@@ -27,3 +27,6 @@ lint = ["ruff>=0.14.5"]
 
 [tool.uv]
 default-groups = ["dev", "lint"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
