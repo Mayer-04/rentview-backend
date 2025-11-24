@@ -121,6 +121,8 @@ class RecordResponse(BaseModel):
     city: str
     housing_type: HousingType
     monthly_rent: Decimal
+    reviews_count: int
+    average_rating: float | None = None
     images: list[RecordImageResponse]
     created_at: datetime | None = None
     updated_at: datetime | None = None
@@ -134,6 +136,8 @@ class RecordResponse(BaseModel):
             city=record.city,
             housing_type=record.housing_type,
             monthly_rent=record.monthly_rent,
+            reviews_count=record.reviews_count,
+            average_rating=record.average_rating,
             images=[
                 RecordImageResponse(
                     id=image.id,

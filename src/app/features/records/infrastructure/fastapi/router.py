@@ -7,7 +7,10 @@ from app.features.records.infrastructure.fastapi.controller import (
     list_records,
     update_record,
 )
-from app.features.records.infrastructure.fastapi.schemas import RecordResponse
+from app.features.records.infrastructure.fastapi.schemas import (
+    PaginatedRecordsResponse,
+    RecordResponse,
+)
 
 records_router = APIRouter(prefix="/records", tags=["records"])
 
@@ -19,7 +22,7 @@ records_router.post(
 
 records_router.get(
     "",
-    response_model=list[RecordResponse],
+    response_model=PaginatedRecordsResponse,
 )(list_records)
 
 records_router.get(
@@ -31,7 +34,6 @@ records_router.put(
     "/{record_id}",
     response_model=RecordResponse,
 )(update_record)
-
 records_router.delete(
     "/{record_id}",
     status_code=status.HTTP_204_NO_CONTENT,

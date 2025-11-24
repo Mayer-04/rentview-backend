@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from app.features.records.application.commands import CreateRecordCommand, UpdateRecordCommand
 from app.features.records.domain import exceptions
-from app.features.records.domain.models import HousingType, Record, RecordImage
+from app.features.records.domain.models import HousingType, PaginatedRecords, Record, RecordImage
 from app.features.records.domain.repository import RecordRepository
 
 ALLOWED_IMAGE_EXTENSIONS = (".jpg", ".png")
@@ -88,6 +88,8 @@ class RecordService:
             city=city,
             housing_type=housing_type,
             monthly_rent=monthly_rent,
+            reviews_count=existing_record.reviews_count,
+            average_rating=existing_record.average_rating,
             images=images,
             created_at=existing_record.created_at,
             updated_at=existing_record.updated_at,
@@ -95,12 +97,29 @@ class RecordService:
 
         return self._repository.update(updated_record, replace_images=replace_images)
 
-    def list_records(self, limit: int = 20, offset: int = 0) -> list[Record]:
-        if limit <= 0 or limit > 100:
-            raise exceptions.MissingRequiredFieldError("limit must be between 1 and 100")
-        if offset < 0:
-            raise exceptions.MissingRequiredFieldError("offset must be zero or positive")
-        return self._repository.list(limit=limit, offset=offset)
+    def list_records(self, page: int = 1, page_size: int = 20) -> PaginatedRecords:
+        if page < 1:
+            raise exceptions.MissingRequiredFieldError("page must be at least 1")
+        if page_size <= 0 or page_size > 100:
+            raise exceptions.MissingRequiredFieldError("page_size must be between 1 and 100")
+
+        offset = (page - 1) * page_size
+        items, total = self._repository.list(limit=page_size, offset=offset)
+
+        total_pages = (total + page_size - 1) // page_size if total > 0 else 0
+        if total == 0 and page > 1:
+            raise exceptions.PageOutOfRangeError("No results available for the requested page")
+        if total_pages > 0 and page > total_pages:
+            raise exceptions.PageOutOfRangeError(
+                f"Requested page {page} exceeds total pages {total_pages}"
+            )
+
+        return PaginatedRecords(
+            items=items,
+            total=total,
+            page=page,
+            page_size=page_size,
+        )
 
     def _validate_create_command(
         self, command: CreateRecordCommand, housing_type: HousingType

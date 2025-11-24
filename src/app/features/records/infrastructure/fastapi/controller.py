@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.features.records.application.commands import CreateRecordCommand, UpdateRecordCommand
@@ -8,6 +8,8 @@ from app.features.records.application.services import RecordService
 from app.features.records.domain import exceptions
 from app.features.records.infrastructure.fastapi.schemas import (
     CreateRecordRequest,
+    PaginatedRecordsResponse,
+    PaginationMeta,
     RecordResponse,
     UpdateRecordRequest,
 )
@@ -82,19 +84,29 @@ async def update_record(
 
 
 async def list_records(
-    limit: int = 20,
-    offset: int = 0,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
     db: Session = Depends(get_db),
-) -> list[RecordResponse]:
+) -> PaginatedRecordsResponse:
     service = _get_service(db)
     try:
-        records = service.list_records(limit=limit, offset=offset)
+        result = service.list_records(page=page, page_size=page_size)
     except exceptions.RecordError as exc:
         raise _to_http_exception(exc) from exc
-    return [RecordResponse.from_domain(record) for record in records]
+    return PaginatedRecordsResponse(
+        items=[RecordResponse.from_domain(record) for record in result.items],
+        meta=PaginationMeta(
+            page=result.page,
+            page_size=result.page_size,
+            total=result.total,
+            total_pages=result.total_pages,
+        ),
+    )
 
 
 def _to_http_exception(error: exceptions.RecordError) -> HTTPException:
+    if isinstance(error, exceptions.PageOutOfRangeError):
+        return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error))
     if isinstance(
         error,
         (
