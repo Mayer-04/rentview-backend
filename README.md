@@ -1,12 +1,8 @@
-uv lock --upgrade
-uv lock --upgrade --refresh
-uv sync
-
-## Feature: Reviews API
+# Feature: Reviews API
 
 Todos los endpoints expuestos por la feature de reseñas están montados bajo el prefijo configurado en `settings.app.api_prefix` (por defecto `/api/v1`). Cada respuesta devuelve JSON con los atributos descritos en las clases de respuesta del controller.
 
-### Crear una reseña
+## Crear una reseña
 
 - **POST** `/api/v1/reviews`
 - **Body**:
@@ -27,13 +23,13 @@ Todos los endpoints expuestos por la feature de reseñas están montados bajo el
   - 409 si el usuario ya reseñó ese record.
   - 422 si la calificación está fuera del rango permitido.
 
-### Obtener una reseña
+## Obtener una reseña
 
 - **GET** `/api/v1/reviews/{review_id}`
 - **Respuesta 200**: `ReviewResponse`.
 - **Errores**: 404 si el `review_id` no existe.
 
-### Listar reseñas de un record
+## Listar reseñas de un record
 
 - **GET** `/api/v1/reviews/record/{record_id}?limit=20&offset=0`
 - **Query params**:
@@ -41,7 +37,7 @@ Todos los endpoints expuestos por la feature de reseñas están montados bajo el
   - `offset` (>=0)
 - **Respuesta 200**: lista de `ReviewResponse`.
 
-### Actualizar reseña
+## Actualizar reseña
 
 - **PUT** `/api/v1/reviews/{review_id}`
 - **Body** (todos los campos opcionales):
@@ -57,13 +53,13 @@ Todos los endpoints expuestos por la feature de reseñas están montados bajo el
 - **Respuesta 200**: `ReviewResponse` actualizado.
 - **Errores**: 404 si no existe, 422 si `rating` inválido.
 
-### Eliminar reseña
+## Eliminar reseña
 
 - **DELETE** `/api/v1/reviews/{review_id}`
 - **Respuesta 204** sin body.
 - **Errores**: 404 si no existe.
 
-### Imágenes de reseña
+## Imágenes de reseña
 
 - **POST** `/api/v1/reviews/{review_id}/images`
   - **Body**: `{ "image_url": "https://..." }`
@@ -72,7 +68,7 @@ Todos los endpoints expuestos por la feature de reseñas están montados bajo el
   - **Respuesta 200**: lista de `ReviewImageResponse`.
 - **Errores**: 404 si la reseña no existe.
 
-### Comentarios en reseña
+## Comentarios en reseña
 
 - **POST** `/api/v1/reviews/{review_id}/comments`
   - **Body**:
@@ -89,7 +85,7 @@ Todos los endpoints expuestos por la feature de reseñas están montados bajo el
   - **Respuesta 200**: lista de `ReviewCommentResponse`.
 - **Errores**: 404 si la reseña no existe.
 
-### Votos de utilidad
+## Votos de utilidad
 
 - **POST** `/api/v1/reviews/{review_id}/votes`
   - **Body**: `{ "user_id": "uuid", "useful": true }`
@@ -105,7 +101,7 @@ Todos los endpoints expuestos por la feature de reseñas están montados bajo el
 }
 ```
 
-### Notas de uso
+## Notas de uso
 
 - Autenticación/autorización no está implementada aún; debes inyectar `user_id` manualmente.
 - Todas las rutas dependen de una base PostgreSQL con las tablas declaradas en `src/app/features/reviews/review.sql`.
@@ -138,3 +134,17 @@ python -m pytest --cov=app --cov-report=html
 ```bash
 http://localhost:5500/htmlcov/
 ```
+
+## Reglas de negocio
+
+- create_review: valida email (formato RFC-like, máx 320 chars), body no vacío, rating 1–5, URLs de imágenes no vacías y con extensión .jpg/.png; exige que el record_id exista (RecordNotFoundError), normaliza datos y envía notificación de correo si hay email_sender.
+
+- list_reviews: requiere que el record exista; page>=1, page_size 1–100; lanza PageOutOfRangeError si pides una página sin datos o más allá del total; devuelve PaginatedResult.
+
+- get_review: lanza ReviewNotFoundError si no existe.
+
+- update_review: obliga a enviar al menos un campo (EmptyReviewUpdateError); valida body/rating/email/imágenes con las mismas reglas que create; lanza ReviewNotFoundError si no existe; solo reemplaza imágenes cuando images viene en el DTO.
+
+- delete_review, add_review_image, delete_review_image: propagan ReviewNotFoundError/ReviewImageNotFoundError/ReviewPersistenceError; add_review_image reutiliza validación de imágenes.
+
+- Una reseña se asocia a un inmueble existente; si el inmueble no existe, la operación falla.
