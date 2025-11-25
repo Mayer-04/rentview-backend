@@ -18,7 +18,7 @@ def test_create_review_persists_and_notifies(make_review) -> None:
     dto = CreateReviewDTO(
         record_id=1,
         title="  Excelente estadía ",
-        email=" user@example.com ",
+        email=" dsadsadsdsadsadsadsd ",
         body=" Muy cómodo ",
         rating=5,
         images=[" https://cdn.example.com/photo.jpg "],
