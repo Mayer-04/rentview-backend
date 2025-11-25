@@ -124,3 +124,9 @@ Para crear una reseña vía POST /api/v1/reviews solo necesitas valores UUID vá
 Lo único imprescindible es que esos UUID existan en las tablas records y users porque PostgreSQL tiene llaves foráneas (ver review.sql y las columnas con REFERENCES ... ON DELETE CASCADE). Si envías IDs inventados que no existan en la base, obtendrás un error de integridad desde la base de datos.
 En pruebas locales puedes generar IDs con uuidgen o la librería uuid de Python, siempre y cuando insertes los registros correspondientes en users y records antes de llamar al endpoint.
 d9428888-122b-4f5b-89f0-0c5bdae75a5b
+
+## Comandos
+
+python -m pytest --cov=app --cov-report=term-missing
+
+python -m pytest --cov=app --cov-report=html
