@@ -97,7 +97,22 @@ class RecordService:
 
         return self._repository.update(updated_record, replace_images=replace_images)
 
-    def list_records(self, page: int = 1, page_size: int = 20) -> PaginatedRecords:
+    def list_records(
+        self,
+        *,
+        limit: int | None = None,
+        offset: int = 0,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> PaginatedRecords | list[Record] | tuple[list[Record], int]:
+        if limit is not None:
+            if limit <= 0:
+                raise exceptions.MissingRequiredFieldError("limit must be greater than zero")
+            if offset < 0:
+                raise exceptions.MissingRequiredFieldError("offset cannot be negative")
+
+            return self._repository.list(limit=limit, offset=offset)
+
         if page < 1:
             raise exceptions.MissingRequiredFieldError("page must be at least 1")
         if page_size <= 0 or page_size > 100:

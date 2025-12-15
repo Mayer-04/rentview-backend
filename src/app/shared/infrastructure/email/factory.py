@@ -3,7 +3,8 @@ from functools import lru_cache
 from app.shared.application.email import EmailSender
 from app.shared.infrastructure.email.smtp import SmtpEmailSender
 from app.shared.infrastructure.logger import logger
-from app.shared.infrastructure.settings import EmailProvider, settings
+from app.shared.infrastructure.settings import settings
+from app.shared.infrastructure.email.email_settings import EmailProvider
 
 
 class UnsupportedEmailProviderError(RuntimeError):
